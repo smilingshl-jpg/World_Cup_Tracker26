@@ -6,6 +6,7 @@ const path = require('path');
 const { Fetcher } = require('./lib/fetcher');
 const { buildTournament } = require('./lib/tournament');
 const { getOutrightOdds } = require('./lib/odds');
+const { simulate } = require('./lib/sim');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -38,6 +39,7 @@ function sendStatic(res, urlPath) {
 
 function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.env.ODDS_API_KEY || '' } = {}) {
   const f = fetcher || new Fetcher({});
+  let simCache = { key: '', body: null };
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     try {
@@ -46,6 +48,24 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
       }
       if (url.pathname === '/api/odds') {
         return sendJson(res, 200, await getOutrightOdds({ fetcher: f, apiKey: oddsKey }));
+      }
+      if (url.pathname === '/api/simulation') {
+        const t = await buildTournament({ fetcher: f, sourceUrl });
+        const odds = await getOutrightOdds({ fetcher: f, apiKey: oddsKey });
+        const finished = t.matches.filter(m => m.status === 'finished').length;
+        const key = finished + '|' + (odds.fetchedAt || odds.source);
+        if (simCache.key !== key) {
+          const out = simulate({
+            matches: t.matches, groups: t.groups,
+            oddsEntries: odds.entries.map(e => ({ team: e.team, prob: e.prob })),
+            iterations: 10000, seed: 2026
+          });
+          const rows = Object.entries(out.teams)
+            .map(([team, p]) => ({ team, ...p }))
+            .sort((a, b) => b.champion - a.champion);
+          simCache = { key, body: { generatedAt: new Date().toISOString(), iterations: out.iterations, model: out.model, teams: rows } };
+        }
+        return sendJson(res, 200, simCache.body);
       }
       if (url.pathname.startsWith('/api/')) {
         return sendJson(res, 404, { error: 'unknown endpoint' });

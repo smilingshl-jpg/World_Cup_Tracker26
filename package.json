@@ -5,7 +5,7 @@
   "description": "World Cup 2026 hub: groups, bracket, schedule, odds",
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/fetcher.test.js && node tests/teams.test.js && node tests/odds.test.js && node tests/standings.test.js && node tests/bracket.test.js && node tests/api.test.js && node tests/data.test.js && node tests/scorers.test.js && node tests/scenarios.test.js"
+    "test": "node tests/fetcher.test.js && node tests/teams.test.js && node tests/odds.test.js && node tests/standings.test.js && node tests/bracket.test.js && node tests/api.test.js && node tests/data.test.js && node tests/scorers.test.js && node tests/scenarios.test.js && node tests/sim.test.js"
   },
   "engines": { "node": ">=18" }
 }
