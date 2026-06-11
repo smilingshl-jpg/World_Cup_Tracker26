@@ -2,10 +2,10 @@ import { state, sigs } from './state.js';
 import { $ } from './format.js';
 import { renderToday, tickCountdown } from './today.js';
 import { refreshTicker } from './ticker.js';
+import { renderGroups } from './groups.js';
+import { renderTeams } from './teams.js';
 
-// stubs replaced by UH-8..UH-12:
-const renderGroups = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
-const renderTeams = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
+// stubs replaced by UH-9..UH-12:
 const renderSchedule = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
 const renderVenues = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
 const renderBracket = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
