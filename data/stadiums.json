@@ -1,0 +1,165 @@
+﻿[
+    {
+        "grounds":  [
+                        "Mexico City"
+                    ],
+        "stadium":  "Estadio Azteca",
+        "city":  "Mexico City",
+        "country":  "Mexico",
+        "capacity":  87523
+    },
+    {
+        "grounds":  [
+                        "Guadalajara",
+                        "Zapopan",
+                        "Guadalajara (Zapopan)"
+                    ],
+        "stadium":  "Estadio Akron",
+        "city":  "Guadalajara",
+        "country":  "Mexico",
+        "capacity":  49850
+    },
+    {
+        "grounds":  [
+                        "Monterrey",
+                        "Guadalupe",
+                        "Monterrey (Guadalupe)"
+                    ],
+        "stadium":  "Estadio BBVA",
+        "city":  "Monterrey",
+        "country":  "Mexico",
+        "capacity":  53500
+    },
+    {
+        "grounds":  [
+                        "Toronto"
+                    ],
+        "stadium":  "BMO Field",
+        "city":  "Toronto",
+        "country":  "Canada",
+        "capacity":  45736
+    },
+    {
+        "grounds":  [
+                        "Vancouver"
+                    ],
+        "stadium":  "BC Place",
+        "city":  "Vancouver",
+        "country":  "Canada",
+        "capacity":  54500
+    },
+    {
+        "grounds":  [
+                        "Atlanta"
+                    ],
+        "stadium":  "Mercedes-Benz Stadium",
+        "city":  "Atlanta",
+        "country":  "United States",
+        "capacity":  71000
+    },
+    {
+        "grounds":  [
+                        "Boston",
+                        "Foxborough",
+                        "Boston (Foxborough)"
+                    ],
+        "stadium":  "Gillette Stadium",
+        "city":  "Boston",
+        "country":  "United States",
+        "capacity":  65878
+    },
+    {
+        "grounds":  [
+                        "Dallas",
+                        "Arlington",
+                        "Dallas (Arlington)"
+                    ],
+        "stadium":  "AT\u0026T Stadium",
+        "city":  "Dallas",
+        "country":  "United States",
+        "capacity":  80000
+    },
+    {
+        "grounds":  [
+                        "Houston"
+                    ],
+        "stadium":  "NRG Stadium",
+        "city":  "Houston",
+        "country":  "United States",
+        "capacity":  72220
+    },
+    {
+        "grounds":  [
+                        "Kansas City"
+                    ],
+        "stadium":  "Arrowhead Stadium",
+        "city":  "Kansas City",
+        "country":  "United States",
+        "capacity":  76416
+    },
+    {
+        "grounds":  [
+                        "Los Angeles",
+                        "Inglewood",
+                        "Los Angeles (Inglewood)"
+                    ],
+        "stadium":  "SoFi Stadium",
+        "city":  "Los Angeles",
+        "country":  "United States",
+        "capacity":  70240
+    },
+    {
+        "grounds":  [
+                        "Miami",
+                        "Miami Gardens",
+                        "Miami (Miami Gardens)"
+                    ],
+        "stadium":  "Hard Rock Stadium",
+        "city":  "Miami",
+        "country":  "United States",
+        "capacity":  64767
+    },
+    {
+        "grounds":  [
+                        "New York/New Jersey",
+                        "New York",
+                        "East Rutherford",
+                        "New Jersey",
+                        "New York/New Jersey (East Rutherford)"
+                    ],
+        "stadium":  "MetLife Stadium",
+        "city":  "New York / New Jersey",
+        "country":  "United States",
+        "capacity":  82500
+    },
+    {
+        "grounds":  [
+                        "Philadelphia"
+                    ],
+        "stadium":  "Lincoln Financial Field",
+        "city":  "Philadelphia",
+        "country":  "United States",
+        "capacity":  69796
+    },
+    {
+        "grounds":  [
+                        "San Francisco",
+                        "San Francisco Bay Area",
+                        "Santa Clara",
+                        "San Francisco Bay Area (Santa Clara)"
+                    ],
+        "stadium":  "Levi\u0027s Stadium",
+        "city":  "San Francisco Bay Area",
+        "country":  "United States",
+        "capacity":  68500
+    },
+    {
+        "grounds":  [
+                        "Seattle"
+                    ],
+        "stadium":  "Lumen Field",
+        "city":  "Seattle",
+        "country":  "United States",
+        "capacity":  68740
+    }
+]
