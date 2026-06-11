@@ -1,0 +1,13 @@
+{
+  "name": "FIFA World Cup 2026 (fixture)",
+  "matches": [
+    { "num": 1, "round": "Matchday 1", "date": "2026-06-11", "time": "13:00 UTC-6", "team1": "Mexico", "team2": "South Africa", "group": "Group A", "ground": "Mexico City", "score": { "ft": [2, 0] } },
+    { "num": 2, "round": "Matchday 1", "date": "2026-06-11", "time": "19:00 UTC-6", "team1": "Canada", "team2": "Qatar", "group": "Group A", "ground": "Toronto", "score": { "ft": [1, 1] } },
+    { "num": 3, "round": "Matchday 2", "date": "2026-06-14", "time": "13:00 UTC-6", "team1": "Mexico", "team2": "Canada", "group": "Group A", "ground": "Guadalajara", "score": { "ft": [0, 1] } },
+    { "num": 4, "round": "Matchday 2", "date": "2026-06-14", "time": "19:00 UTC-6", "team1": "South Africa", "team2": "Qatar", "group": "Group A", "ground": "Toronto", "score": { "ft": [3, 1] } },
+    { "num": 5, "round": "Matchday 3", "date": "2026-06-18", "time": "13:00 UTC-6", "team1": "Mexico", "team2": "Qatar", "group": "Group A", "ground": "Mexico City", "score": { "ft": [2, 1] } },
+    { "num": 6, "round": "Matchday 3", "date": "2026-06-18", "time": "13:00 UTC-6", "team1": "Canada", "team2": "South Africa", "group": "Group A", "ground": "Vancouver", "score": { "ft": [2, 2] } },
+    { "num": 73, "round": "Round of 32", "date": "2026-06-28", "time": "15:00 UTC-4", "team1": "1A", "team2": "3C/3D/3E/3F", "ground": "Boston" },
+    { "num": 74, "round": "Round of 32", "date": "2026-06-29", "time": "15:00 UTC-4", "team1": "2A", "team2": "1B", "ground": "Dallas" }
+  ]
+}
