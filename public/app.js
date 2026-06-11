@@ -175,8 +175,107 @@ function slotScore(m, team) {
   if (!s) return '';
   return team === m.team1 ? s[0] : s[1];
 }
-function renderTeams() { return { sig: 'stub', html: '<p>coming in task 12</p>' }; }
-function renderStats() { return { sig: 'stub', html: '<p>coming in task 12</p>' }; }
+function renderTeams() {
+  const t = state.tournament;
+  const odds = state.odds;
+  const sig = JSON.stringify([t.teams, t.matches.length, odds && odds.fetchedAt, odds && odds.entries.length]);
+  const oddsByTeam = odds ? Object.fromEntries(odds.entries.map((e, i) => [e.team, { ...e, rank: i + 1 }])) : {};
+
+  const cards = [...t.teams]
+    .sort((a, b) => (oddsByTeam[a.name]?.rank ?? 99) - (oddsByTeam[b.name]?.rank ?? 99))
+    .map(team => {
+      const o = oddsByTeam[team.name];
+      const fixtures = t.matches
+        .filter(m => m.group && (m.team1 === team.name || m.team2 === team.name))
+        .map(m => `${esc(localTime(m.kickoff))} — ${esc(m.team1)} ${esc(scoreText(m))} ${esc(m.team2)}`)
+        .join('<br>');
+      return `<div class="card team-card">
+        <h2>${flagImg(team.flag, team.name)}${esc(team.name)} <span class="chip">${esc(team.group || 'TBD')}</span></h2>
+        <div class="odds-line">${o
+          ? `#${o.rank} favourite · ${(o.prob * 100).toFixed(1)}% win probability · ${o.decimal.toFixed(o.decimal < 20 ? 2 : 0)} decimal odds`
+          : 'odds unavailable'}</div>
+        <div class="fixtures">${fixtures || 'Fixtures TBD'}</div>
+      </div>`;
+    }).join('');
+
+  return { sig, html: `<div class="team-grid">${cards}</div>` };
+}
+
+function svgBarChart(rows, { valueLabel }) {
+  // rows: [{ label, value, display, gold? }]
+  const W = 720, rowH = 26, pad = 4;
+  const H = rows.length * rowH + pad * 2;
+  const max = Math.max(...rows.map(r => r.value), 1e-9);
+  const labelW = 170, valW = 70, barMax = W - labelW - valW - 20;
+  const bars = rows.map((r, i) => {
+    const y = pad + i * rowH;
+    const w = Math.max(2, (r.value / max) * barMax);
+    return `<text x="${labelW - 6}" y="${y + 17}" text-anchor="end">${esc(r.label)}</text>
+      <rect class="bar ${r.gold ? 'gold' : ''}" x="${labelW}" y="${y + 4}" width="${w}" height="${rowH - 9}" rx="3"></rect>
+      <text class="val" x="${labelW + w + 8}" y="${y + 17}">${esc(r.display)}</text>`;
+  }).join('');
+  return `<svg class="bar-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(valueLabel)}">${bars}</svg>`;
+}
+
+function renderStats() {
+  const t = state.tournament;
+  const odds = state.odds;
+  const finished = t.matches.filter(m => m.status === 'finished' && m.score && m.score.ft);
+  const sig = JSON.stringify([finished.length, odds && odds.fetchedAt, odds && odds.entries.slice(0, 3)]);
+
+  // tournament totals
+  let goals = 0, biggest = null;
+  for (const m of finished) {
+    const [a, b] = m.score.ft;
+    goals += a + b;
+    const margin = Math.abs(a - b);
+    if (!biggest || margin > biggest.margin) biggest = { margin, text: `${m.team1} ${a}–${b} ${m.team2}` };
+  }
+  const strip = `<div class="stat-strip">
+    <div class="stat"><div class="big">${finished.length}</div><div class="label">matches played</div></div>
+    <div class="stat"><div class="big">${goals}</div><div class="label">goals</div></div>
+    <div class="stat"><div class="big">${finished.length ? (goals / finished.length).toFixed(2) : '—'}</div><div class="label">goals / match</div></div>
+    <div class="stat"><div class="big">${biggest ? esc(biggest.text) : '—'}</div><div class="label">biggest win</div></div>
+  </div>`;
+
+  // win probability chart (top 15)
+  let probChart = '<div class="card"><p>Odds loading…</p></div>';
+  if (odds) {
+    const rows = odds.entries.slice(0, 15).map((e, i) => ({
+      label: e.team, value: e.prob, display: (e.prob * 100).toFixed(1) + '%', gold: i === 0
+    }));
+    probChart = `<div class="card">
+      <h2>Win probability <span class="chip">${odds.live ? 'live bookmaker average' : 'snapshot: ' + esc(odds.source)}</span></h2>
+      ${svgBarChart(rows, { valueLabel: 'Win probability' })}
+    </div>`;
+  }
+
+  // goals by round
+  const byRound = new Map();
+  for (const m of finished) {
+    byRound.set(m.round, (byRound.get(m.round) || 0) + m.score.ft[0] + m.score.ft[1]);
+  }
+  const goalsChart = byRound.size
+    ? `<div class="card"><h2>Goals by round</h2>${svgBarChart(
+        [...byRound.entries()].map(([label, value]) => ({ label, value, display: String(value) })),
+        { valueLabel: 'Goals by round' }
+      )}</div>`
+    : '';
+
+  // full odds table
+  let oddsTable = '';
+  if (odds) {
+    const flagOf = Object.fromEntries(t.teams.map(x => [x.name, x.flag]));
+    oddsTable = `<div class="card"><h2>Outright winner odds — all 48 teams</h2>
+      <table><thead><tr><th>#</th><th>Team</th><th class="num">Decimal odds</th><th class="num">Implied prob.</th></tr></thead>
+      <tbody>${odds.entries.map((e, i) =>
+        `<tr><td>${i + 1}</td><td>${flagImg(flagOf[e.team], e.team)}${esc(e.team)}</td>
+         <td class="num">${e.decimal.toFixed(2)}</td><td class="num">${(e.prob * 100).toFixed(2)}%</td></tr>`
+      ).join('')}</tbody></table></div>`;
+  }
+
+  return { sig, html: strip + probChart + goalsChart + oddsTable };
+}
 function wireScheduleFilters() {
   const txt = $('#sched-text');
   const stage = $('#sched-stage');
