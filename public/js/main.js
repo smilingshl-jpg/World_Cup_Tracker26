@@ -8,9 +8,7 @@ import { renderTeams } from './teams.js';
 import { renderSchedule, wireSchedule } from './schedule.js';
 import { renderVenues, loadStadiums } from './venues.js';
 import { renderBracket, wireBracket } from './bracket.js';
-
-// stub replaced by UH-12:
-const renderStats = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
+import { renderStats } from './stats.js';
 
 function wireView(view, el) {
   if (view === 'schedule') wireSchedule();
