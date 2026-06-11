@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>World Cup 2026 Hub</title>
+<title>World Cup 26 — The Hub</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
-  <h1>⚽ World Cup 2026</h1>
+  <h1 class="wordmark"><span class="stripe"></span>WORLD CUP <em>26</em></h1>
   <nav class="tabs">
     <button class="tab active" data-view="today">Today</button>
     <button class="tab" data-view="groups">Groups</button>
@@ -16,9 +16,11 @@
     <button class="tab" data-view="bracket">Bracket</button>
     <button class="tab" data-view="teams">Teams</button>
     <button class="tab" data-view="stats">Stats</button>
+    <button class="tab" data-view="venues">Venues</button>
   </nav>
   <div id="data-status" class="data-status">loading…</div>
 </header>
+<div id="ticker" class="ticker" hidden><div class="ticker-label">NEWS</div><div class="ticker-track" id="ticker-track"></div></div>
 <main>
   <section id="view-today" class="view active"></section>
   <section id="view-groups" class="view"></section>
@@ -26,10 +28,11 @@
   <section id="view-bracket" class="view"></section>
   <section id="view-teams" class="view"></section>
   <section id="view-stats" class="view"></section>
+  <section id="view-venues" class="view"></section>
 </main>
 <footer class="footer">
-  Fixtures &amp; results: openfootball (public domain) · Odds: <span id="odds-source"></span> · Times shown in your local timezone
+  Fixtures &amp; results: openfootball (public domain) · Odds: <span id="odds-source"></span> · News: BBC Sport · Times in your local timezone
 </footer>
-<script src="app.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
