@@ -5,12 +5,16 @@ import { refreshTicker } from './ticker.js';
 import { renderGroups } from './groups.js';
 import { renderTeams } from './teams.js';
 
-// stubs replaced by UH-9..UH-12:
-const renderSchedule = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
-const renderVenues = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
+import { renderSchedule, wireSchedule } from './schedule.js';
+import { renderVenues, loadStadiums } from './venues.js';
+
+// stubs replaced by UH-11..UH-12:
 const renderBracket = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
 const renderStats = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
-const wireView = () => {};
+
+function wireView(view) {
+  if (view === 'schedule') wireSchedule();
+}
 
 const RENDERERS = { today: renderToday, groups: renderGroups, schedule: renderSchedule, bracket: renderBracket, teams: renderTeams, stats: renderStats, venues: renderVenues };
 
@@ -55,6 +59,7 @@ document.querySelectorAll('.tab').forEach(btn => {
   });
 });
 
+loadStadiums().then(() => { sigs.venues = null; renderAll(); });
 refresh();
 refreshTicker();
 setInterval(refresh, 60 * 1000);
