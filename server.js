@@ -8,6 +8,7 @@ const { buildTournament } = require('./lib/tournament');
 const { getOutrightOdds } = require('./lib/odds');
 const { simulate } = require('./lib/sim');
 const { makeNewsSource } = require('./lib/news');
+const { parseScoreboard, ESPN_URL, LIVE_TTL } = require('./lib/livescores');
 const STADIUMS = require('./data/stadiums.json');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
@@ -43,17 +44,21 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
   const f = fetcher || new Fetcher({});
   let simCache = { key: '', body: null };
   const news = makeNewsSource({});
+  // ESPN scoreboard is best-effort: failures degrade to openfootball-only data
+  const liveEntries = async () => {
+    try { return parseScoreboard(await f.get(ESPN_URL, LIVE_TTL)); } catch { return null; }
+  };
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     try {
       if (url.pathname === '/api/tournament') {
-        return sendJson(res, 200, await buildTournament({ fetcher: f, sourceUrl }));
+        return sendJson(res, 200, await buildTournament({ fetcher: f, sourceUrl, liveEntries: await liveEntries() }));
       }
       if (url.pathname === '/api/odds') {
         return sendJson(res, 200, await getOutrightOdds({ fetcher: f, apiKey: oddsKey }));
       }
       if (url.pathname === '/api/simulation') {
-        const t = await buildTournament({ fetcher: f, sourceUrl });
+        const t = await buildTournament({ fetcher: f, sourceUrl, liveEntries: await liveEntries() });
         const odds = await getOutrightOdds({ fetcher: f, apiKey: oddsKey });
         const finished = t.matches.filter(m => m.status === 'finished').length;
         const key = finished + '|' + (odds.fetchedAt || odds.source);

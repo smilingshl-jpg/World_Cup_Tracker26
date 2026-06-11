@@ -13,6 +13,7 @@ export function localDay(iso) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
 export function scoreText(m) {
+  if (m.live && m.live.score) return `${m.live.score[0]} – ${m.live.score[1]}`;
   if (!m.score) return 'vs';
   const s = m.score.ft || m.score.et || m.score.p;
   if (!s) return 'vs';
@@ -22,7 +23,10 @@ export function scoreText(m) {
   return txt;
 }
 export function statusChip(m) {
-  if (m.status === 'live') return '<span class="chip live">LIVE</span>';
+  if (m.status === 'live') {
+    const clock = m.live && m.live.clock ? ' ' + m.live.clock : '';
+    return `<span class="chip live">LIVE${esc(clock)}</span>`;
+  }
   if (m.status === 'finished') return '<span class="chip">FT</span>';
   return '';
 }

@@ -36,7 +36,7 @@ export function renderSchedule() {
   }
   const days = [...byDay.entries()].map(([day, list]) =>
     `<div class="day-header">${esc(day)}</div><div class="card">${
-      list.map(m => vsRow(m, colorsOf, m.status === 'finished' ? scorersHtml(m) : '')).join('')
+      list.map(m => vsRow(m, colorsOf, m.status === 'finished' || m.status === 'live' ? scorersHtml(m) : '')).join('')
     }</div>`).join('');
 
   const html = `<div class="filters">
