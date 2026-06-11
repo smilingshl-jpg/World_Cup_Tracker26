@@ -7,6 +7,8 @@ const { Fetcher } = require('./lib/fetcher');
 const { buildTournament } = require('./lib/tournament');
 const { getOutrightOdds } = require('./lib/odds');
 const { simulate } = require('./lib/sim');
+const { makeNewsSource } = require('./lib/news');
+const STADIUMS = require('./data/stadiums.json');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -40,6 +42,7 @@ function sendStatic(res, urlPath) {
 function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.env.ODDS_API_KEY || '' } = {}) {
   const f = fetcher || new Fetcher({});
   let simCache = { key: '', body: null };
+  const news = makeNewsSource({});
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     try {
@@ -66,6 +69,13 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
           simCache = { key, body: { generatedAt: new Date().toISOString(), iterations: out.iterations, model: out.model, teams: rows } };
         }
         return sendJson(res, 200, simCache.body);
+      }
+      if (url.pathname === '/api/news') {
+        const n = await news.get();
+        return sendJson(res, 200, { items: n.items, fetchedAt: n.fetchedAt || null });
+      }
+      if (url.pathname === '/api/stadiums') {
+        return sendJson(res, 200, STADIUMS);
       }
       if (url.pathname.startsWith('/api/')) {
         return sendJson(res, 404, { error: 'unknown endpoint' });
