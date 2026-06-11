@@ -145,7 +145,9 @@ Plain-assert node scripts, added to `npm test`:
 - `scorers.test.js` — aggregation, penalties, tolerant of missing fields.
 - `scenarios.test.js` — crafted last-matchday group: THROUGH/OUT/ALIVE all exercised; inactive before final matchday.
 - `bracket-tree.test.js` — wing derivation from W## chains on a synthetic 8-team bracket; fallback flag when chain broken.
-- `picks.test.js` — scoring function; downstream-clear logic (pure helpers shared with client via duplicated pure JS or a small common file served statically and required in tests).
+- `picks.test.js` — scoring function; downstream-clear logic. The pure pick'em helpers live in
+  `public/js/picks-core.js` as an ES module (no DOM access); the browser imports it normally and
+  the node test loads it via dynamic `import('file://...')`.
 - `news.test.js` — parse fixture RSS XML; empty/failure path.
 - Data integrity inside `teams.test.js`-style checks: team-colors/history cover exactly the 48 canonical names; stadiums grounds match fixture data grounds.
 - UI verified against the live preview (all tabs, console clean, flicker guard re-proven).
