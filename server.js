@@ -9,6 +9,8 @@ const { getOutrightOdds } = require('./lib/odds');
 const { simulate } = require('./lib/sim');
 const { makeNewsSource } = require('./lib/news');
 const { parseScoreboard, ESPN_URL, LIVE_TTL } = require('./lib/livescores');
+const espn = require('./lib/espn');
+const { findTeam } = require('./lib/teams');
 const STADIUMS = require('./data/stadiums.json');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
@@ -81,6 +83,28 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
       }
       if (url.pathname === '/api/stadiums') {
         return sendJson(res, 200, STADIUMS);
+      }
+      if (url.pathname === '/api/roster') {
+        const team = url.searchParams.get('team') || '';
+        const ids = espn.parseTeams(await f.get(espn.TEAMS_URL, espn.DAY_TTL));
+        const canon = findTeam(team);
+        const id = canon && ids.get(canon.name);
+        if (!id) return sendJson(res, 404, { error: 'unknown team', team });
+        const players = espn.parseRoster(await f.get(espn.ROSTER_URL(id), espn.DAY_TTL));
+        return sendJson(res, 200, { team: canon.name, players });
+      }
+      if (url.pathname === '/api/matchdetail') {
+        const num = Number(url.searchParams.get('num'));
+        const t = await buildTournament({ fetcher: f, sourceUrl, liveEntries: await liveEntries() });
+        const match = t.matches.find(m => m.num === num);
+        if (!match) return sendJson(res, 404, { error: 'unknown match', num });
+        if (!match.date) return sendJson(res, 200, { num, available: false });
+        const yyyymmdd = match.date.replace(/-/g, '');
+        const sb = await f.get(espn.SCOREBOARD_DATE_URL(yyyymmdd), espn.MINUTE_TTL);
+        const eventId = espn.findEvent(sb, match.team1, match.team2);
+        if (!eventId) return sendJson(res, 200, { num, available: false });
+        const detail = espn.parseSummary(await f.get(espn.SUMMARY_URL(eventId), espn.MINUTE_TTL));
+        return sendJson(res, 200, { num, available: true, ...detail });
       }
       if (url.pathname.startsWith('/api/')) {
         return sendJson(res, 404, { error: 'unknown endpoint' });
