@@ -45,7 +45,46 @@ function matchRowHtml(m) {
 }
 
 // ---- view stubs (replaced in tasks 10-12) ----
-function renderGroups() { return { sig: 'stub', html: '<p>coming in task 10</p>' }; }
+function renderGroups() {
+  const t = state.tournament;
+  const sig = JSON.stringify([t.standings, t.thirdPlace]);
+  const flagOf = Object.fromEntries(t.teams.map(x => [x.name, x.flag]));
+
+  const groupCards = Object.keys(t.standings).sort().map(g => {
+    const { table, complete } = t.standings[g];
+    return `<div class="card">
+      <h2>${esc(g)} ${complete ? '<span class="chip">complete</span>' : ''}</h2>
+      <table><thead><tr>
+        <th>Team</th><th class="num">P</th><th class="num">W</th><th class="num">D</th>
+        <th class="num">L</th><th class="num">GF</th><th class="num">GA</th><th class="num">GD</th><th class="num">Pts</th>
+      </tr></thead><tbody>${
+        table.map((r, i) => `<tr class="${complete && i < 2 ? 'qualified' : ''}">
+          <td>${flagImg(flagOf[r.team], r.team)}${esc(r.team)}</td>
+          <td class="num">${r.played}</td><td class="num">${r.won}</td><td class="num">${r.drawn}</td>
+          <td class="num">${r.lost}</td><td class="num">${r.gf}</td><td class="num">${r.ga}</td>
+          <td class="num">${r.gd > 0 ? '+' : ''}${r.gd}</td><td class="num"><b>${r.points}</b></td>
+        </tr>`).join('')
+      }</tbody></table>
+    </div>`;
+  }).join('');
+
+  const thirds = `<div class="card">
+    <h2>Third-place race <span class="chip">best 8 of 12 advance</span></h2>
+    <table><thead><tr>
+      <th>#</th><th>Team</th><th>Group</th><th class="num">Pts</th><th class="num">GD</th><th class="num">GF</th>
+    </tr></thead><tbody>${
+      t.thirdPlace.map((r, i) => `<tr class="${r.qualified ? 'qualified' : 'eliminated'}">
+        <td>${i + 1}</td>
+        <td>${flagImg(flagOf[r.team], r.team)}${esc(r.team)}</td>
+        <td>${esc(r.group.replace('Group ', ''))}</td>
+        <td class="num"><b>${r.points}</b></td>
+        <td class="num">${r.gd > 0 ? '+' : ''}${r.gd}</td><td class="num">${r.gf}</td>
+      </tr>`).join('')
+    }</tbody></table>
+  </div>`;
+
+  return { sig, html: `<div class="group-grid">${groupCards}</div>${thirds}` };
+}
 function renderSchedule() { return { sig: 'stub', html: '<p>coming in task 11</p>' }; }
 function renderBracket() { return { sig: 'stub', html: '<p>coming in task 11</p>' }; }
 function renderTeams() { return { sig: 'stub', html: '<p>coming in task 12</p>' }; }
