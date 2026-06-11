@@ -7,13 +7,14 @@ import { renderTeams } from './teams.js';
 
 import { renderSchedule, wireSchedule } from './schedule.js';
 import { renderVenues, loadStadiums } from './venues.js';
+import { renderBracket, wireBracket } from './bracket.js';
 
-// stubs replaced by UH-11..UH-12:
-const renderBracket = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
+// stub replaced by UH-12:
 const renderStats = () => ({ sig: 'stub', html: '<p>coming soon</p>' });
 
-function wireView(view) {
+function wireView(view, el) {
   if (view === 'schedule') wireSchedule();
+  if (view === 'bracket') wireBracket(el);
 }
 
 const RENDERERS = { today: renderToday, groups: renderGroups, schedule: renderSchedule, bracket: renderBracket, teams: renderTeams, stats: renderStats, venues: renderVenues };
