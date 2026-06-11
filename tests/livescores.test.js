@@ -74,6 +74,16 @@ assert.strictEqual(raw[1].liveSource, 'espn');
 assert.ok(!raw[2].score && !raw[2]._live, 'pre match untouched');
 assert.deepStrictEqual(raw[3].score, { ft: [9, 9] }, 'existing openfootball score wins');
 
+// halftime: ESPN keeps state 'in' with displayClock "45'+4'" but flags STATUS_HALFTIME
+const htBoard = { events: [{ id: '9', competitions: [{
+  competitors: [
+    { homeAway: 'home', score: '1', team: { id: '1', displayName: 'Mexico' } },
+    { homeAway: 'away', score: '0', team: { id: '2', displayName: 'South Africa' } }
+  ],
+  status: { type: { state: 'in', name: 'STATUS_HALFTIME', shortDetail: 'HT' }, displayClock: "45'+4'" }
+}] }] };
+assert.strictEqual(parseScoreboard(htBoard)[0].clock, 'HT', 'halftime overrides clock');
+
 // malformed input -> no throw
 applyLive(raw, parseScoreboard({}));
 applyLive(raw, parseScoreboard(null));

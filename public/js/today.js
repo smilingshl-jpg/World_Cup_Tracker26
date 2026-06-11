@@ -1,5 +1,5 @@
 import { state, colorsOf } from './state.js';
-import { $, esc, localTime, vsRow } from './format.js';
+import { $, esc, localTime, vsRow, relTime } from './format.js';
 
 export function renderToday() {
   const t = state.tournament;
@@ -25,6 +25,11 @@ export function renderToday() {
 }
 
 export function tickCountdown() {
+  // keep all "in Xh Ym" kickoff chips current without re-rendering views
+  document.querySelectorAll('.chip.rel[data-kick]').forEach(c => {
+    const txt = relTime(c.dataset.kick);
+    if (c.textContent !== txt) c.textContent = txt;
+  });
   const el = $('#countdown');
   if (!el) return;
   const diff = Date.parse(el.dataset.kickoff) - Date.now();

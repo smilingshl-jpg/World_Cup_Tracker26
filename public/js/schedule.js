@@ -27,6 +27,8 @@ export function renderSchedule() {
     return true;
   });
   const sig = JSON.stringify([matches.map(m => [m.num, m.score, m.status]), scheduleFilter]);
+  // upstream file is grouped by group, not date — sort chronologically (date-less last)
+  matches.sort((a, b) => (Date.parse(a.kickoff) || Infinity) - (Date.parse(b.kickoff) || Infinity));
 
   const byDay = new Map();
   for (const m of matches) {

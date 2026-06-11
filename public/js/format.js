@@ -24,11 +24,28 @@ export function scoreText(m) {
 }
 export function statusChip(m) {
   if (m.status === 'live') {
+    if (m.live && m.live.clock === 'HT') return '<span class="chip live">HALF-TIME</span>';
     const clock = m.live && m.live.clock ? ' ' + m.live.clock : '';
     return `<span class="chip live">LIVE${esc(clock)}</span>`;
   }
   if (m.status === 'finished') return '<span class="chip">FT</span>';
+  if (m.status === 'upcoming' && m.kickoff) {
+    return `<span class="chip rel" data-kick="${esc(m.kickoff)}">${esc(relTime(m.kickoff))}</span>`;
+  }
   return '';
+}
+
+// "in 2d 4h" / "in 4h 23m" / "in 23m" until kickoff
+export function relTime(iso) {
+  const diff = Date.parse(iso) - Date.now();
+  if (!Number.isFinite(diff)) return '';
+  if (diff <= 0) return 'KICKOFF';
+  const m = Math.floor(diff / 60000) % 60;
+  const h = Math.floor(diff / 3600000) % 24;
+  const d = Math.floor(diff / 86400000);
+  if (d > 0) return `in ${d}d ${h}h`;
+  if (h > 0) return `in ${h}h ${m}m`;
+  return `in ${m}m`;
 }
 export function kitStripe(colors) {
   if (!colors || !colors.length) return '';
