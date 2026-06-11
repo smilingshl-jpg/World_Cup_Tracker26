@@ -64,8 +64,9 @@ const summaryJson = {
 const d = parseSummary(summaryJson);
 assert.strictEqual(d.lineups[0].team, 'Mexico');
 assert.strictEqual(d.lineups[0].formation, '4-1-4-1');
-assert.deepStrictEqual(d.lineups[0].starters[0], { name: 'Raúl Rangel', jersey: '1', pos: 'G' });
+assert.deepStrictEqual(d.lineups[0].starters[0], { name: 'Raúl Rangel', jersey: '1', pos: 'G', place: 1 });
 assert.strictEqual(d.lineups[0].subs[0].name, 'Bench Guy');
+assert.strictEqual(d.lineups[0].subs[0].place, null, 'bench has no formation place');
 assert.strictEqual(d.lineups[1].team, 'South Africa');
 const poss = d.stats.find(s => s.key === 'possessionPct');
 assert.deepStrictEqual([poss.home, poss.away, poss.label], ['51.9', '48.1', 'Possession %']);

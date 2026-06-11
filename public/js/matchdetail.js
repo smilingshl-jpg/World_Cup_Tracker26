@@ -1,4 +1,5 @@
 import { esc } from './format.js';
+import { colorsOf } from './state.js';
 
 // Inline match-detail panels. Open panels survive signature-guard re-renders:
 // wireMatchDetails re-applies any panel whose match num is in `open`.
@@ -23,6 +24,58 @@ function lineupCol(l) {
   </div>`;
 }
 
+const lastName = (full) => {
+  const parts = String(full).split(' ');
+  return parts.length > 1 ? parts.slice(1).join(' ') : full;
+};
+
+// Players on a pitch: home attacks right (left half), away mirrored on the right half.
+// Rows come from the formation string ("4-1-4-1" -> GK + [4,1,4,1]); players fill rows
+// sorted by ESPN's formationPlace (1 = goalkeeper).
+function pitchSide(l, mirror) {
+  const rows = [1, ...String(l.formation).split('-').map(Number)];
+  const starters = [...l.starters].sort((a, b) => (a.place ?? 99) - (b.place ?? 99));
+  if (rows.some(isNaN) || rows.reduce((s, n) => s + n, 0) !== starters.length) return null;
+  const color = colorsOf(l.team)[0];
+  let idx = 0;
+  const dots = [];
+  rows.forEach((count, r) => {
+    // depth across this team's half: GK hugs the goal line, last row near midfield
+    const xHalf = 6 + (r / Math.max(rows.length - 1, 1)) * 38; // 6%..44% of full pitch
+    const x = mirror ? 100 - xHalf : xHalf;
+    for (let j = 0; j < count; j++, idx++) {
+      const p = starters[idx];
+      const y = ((j + 0.5) / count) * 100;
+      dots.push(`<div class="pl" style="left:${x}%;top:${y}%;">
+        <span class="dot" style="background:${color};">${esc(p.jersey ?? '')}</span>
+        <span class="pname">${esc(lastName(p.name))}</span>
+      </div>`);
+    }
+  });
+  return dots.join('');
+}
+
+function lineupsHtml(lineups) {
+  const home = pitchSide(lineups[0], false);
+  const away = lineups[1] ? pitchSide(lineups[1], true) : null;
+  if (!home || !away) {
+    return `<div class="lineups">${lineups.map(lineupCol).join('')}</div>`; // fallback: list view
+  }
+  const bench = (l) => l.subs.length
+    ? `<div class="bench-col"><div class="label">${esc(l.team)} bench</div>${
+        l.subs.map(p => `<span class="bench-p"><span class="jersey">${esc(p.jersey ?? '')}</span> ${esc(lastName(p.name))}</span>`).join('')}</div>`
+    : '';
+  return `<div class="pitch-head">
+      <span>${esc(lineups[0].team)} · ${esc(lineups[0].formation)}</span>
+      <span>${esc(lineups[1].formation)} · ${esc(lineups[1].team)}</span>
+    </div>
+    <div class="pitch">
+      <div class="pitch-lines"></div>
+      ${home}${away}
+    </div>
+    <div class="benches">${bench(lineups[0])}${bench(lineups[1])}</div>`;
+}
+
 function statBars(stats) {
   return stats.map(s => {
     const h = parseFloat(s.home) || 0, a = parseFloat(s.away) || 0;
@@ -44,7 +97,7 @@ function formChips(side) {
 function panelHtml(d) {
   if (!d.available) return '<div class="detail-panel"><p class="scenario-note">No extra detail available for this match yet.</p></div>';
   const parts = [];
-  if (d.lineups) parts.push(`<div class="detail-section"><div class="label">Lineups</div><div class="lineups">${d.lineups.map(lineupCol).join('')}</div></div>`);
+  if (d.lineups) parts.push(`<div class="detail-section"><div class="label">Lineups</div>${lineupsHtml(d.lineups)}</div>`);
   if (d.stats && d.stats.length) parts.push(`<div class="detail-section"><div class="label">Match stats</div>${statBars(d.stats)}</div>`);
   if (d.form) parts.push(`<div class="detail-section"><div class="label">Form (last 5)</div>${d.form.map(formChips).join('')}</div>`);
   if (d.h2h) parts.push(`<div class="detail-section"><div class="label">Head to head</div>${d.h2h.slice(0, 5).map(h => `<div class="h2h-line">${esc((h.date || '').slice(0, 10))} — ${esc(h.text)}</div>`).join('')}</div>`);
@@ -82,6 +135,17 @@ function hidePanel(row) {
   const panel = row.nextElementSibling;
   if (panel && panel.classList.contains('detail-panel')) panel.remove();
 }
+
+// Auto-refresh: every minute, re-fetch and re-render any open panel so live
+// lineups/stats stay accurate even when the surrounding view doesn't re-render.
+setInterval(() => {
+  if (!open.size) return;
+  cache.clear();
+  document.querySelectorAll('.vs-row[data-num]').forEach(row => {
+    const num = Number(row.dataset.num);
+    if (open.has(num)) showPanel(row, num);
+  });
+}, 60 * 1000);
 
 // Called after any view render: binds clicks and restores open panels.
 export function wireMatchDetails(el) {
