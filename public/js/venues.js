@@ -18,14 +18,14 @@ export function renderVenues() {
       <h2>${esc(s.stadium)}</h2>
       <div class="label">${esc(s.city)}, ${esc(s.country)}</div>
       <div class="cap">Capacity ${s.capacity.toLocaleString()} · ${ms.length} matches</div>
-      ${ms.map(m => vsRow(m, colorsOf)).join('')}
+      ${ms.map(m => vsRow(m, colorsOf, '', { hideGround: true })).join('')}
     </div>`;
   });
   // unknown grounds in upstream data still get a plain card (no hard fail)
   const unknownGrounds = [...new Set(t.matches.map(m => m.ground).filter(g => g && !known.has(g)))];
   for (const g of unknownGrounds) {
     const ms = t.matches.filter(m => m.ground === g);
-    cards.push(`<div class="card venue-card"><h2>${esc(g)}</h2><div class="cap">${ms.length} matches</div>${ms.map(m => vsRow(m, colorsOf)).join('')}</div>`);
+    cards.push(`<div class="card venue-card"><h2>${esc(g)}</h2><div class="cap">${ms.length} matches</div>${ms.map(m => vsRow(m, colorsOf, '', { hideGround: true })).join('')}</div>`);
   }
   return { sig, html: `<div class="venue-grid">${cards.join('')}</div>` };
 }

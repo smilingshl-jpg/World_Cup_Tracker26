@@ -34,12 +34,14 @@ export function kitStripe(colors) {
 }
 
 // Versus banner row (team-colors feature B). colorsOf: (team) => [hex,...]
-export function vsRow(m, colorsOf, extraHtml = '') {
+// opts.hideGround: skip the venue line (redundant inside venue cards)
+export function vsRow(m, colorsOf, extraHtml = '', opts = {}) {
   const c1 = colorsOf(m.team1)[0], c2 = colorsOf(m.team2)[0];
-  return `<div class="vs-row" style="--c1:${c1};--c2:${c2};">
+  const meta = esc(localTime(m.kickoff)) + (opts.hideGround ? '' : `<br>${esc(m.ground || '')}`);
+  return `<div class="vs-row ${opts.hideGround ? 'compact' : ''}" style="--c1:${c1};--c2:${c2};">
     <div class="side l"></div><div class="side r"></div>
     <div class="inner">
-      <span class="match-meta">${esc(localTime(m.kickoff))}<br>${esc(m.ground || '')}</span>
+      <span class="match-meta">${meta}</span>
       <span class="t r">${esc(m.team1)} ${flagImg(m.flag1, m.team1)}</span>
       <span class="match-score">${esc(scoreText(m))}</span>
       <span class="t">${flagImg(m.flag2, m.team2)} ${esc(m.team2)}</span>
