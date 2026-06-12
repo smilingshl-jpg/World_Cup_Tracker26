@@ -28,12 +28,22 @@ assert.strictEqual(roster[2].position, null);
 
 // ---- summary (mirrors real event 760415 structure) ----
 const summaryJson = {
+  broadcasts: [
+    { media: { shortName: 'FOX' } }, { media: { shortName: 'Peacock' } }, { market: { type: 'Home' } }
+  ],
+  keyEvents: [
+    { type: { text: 'Kickoff' }, clock: { displayValue: '' }, team: {} },
+    { type: { text: 'Goal' }, scoringPlay: true, clock: { displayValue: "9'" }, team: { id: '1' },
+      text: 'Goal! Mexico 1, South Africa 0. Julián Quiñones (Mexico).' },
+    { type: { text: 'Yellow Card' }, clock: { displayValue: "40'" }, team: { id: '2' }, text: 'Bongani booked.' },
+    { type: { text: 'Substitution' }, clock: { displayValue: "60'" }, team: { id: '1' }, text: 'Sub: in for out.' }
+  ],
   rosters: [
-    { homeAway: 'home', formation: '4-1-4-1', team: { displayName: 'Mexico' }, roster: [
+    { homeAway: 'home', formation: '4-1-4-1', team: { id: '1', displayName: 'Mexico' }, roster: [
       { starter: true, jersey: '1', formationPlace: '1', position: { abbreviation: 'G' }, athlete: { displayName: 'Raúl Rangel' } },
       { starter: false, jersey: '9', position: { abbreviation: 'F' }, athlete: { displayName: 'Bench Guy' } }
     ] },
-    { homeAway: 'away', formation: '4-3-3', team: { displayName: 'South Africa' }, roster: [
+    { homeAway: 'away', formation: '4-3-3', team: { id: '2', displayName: 'South Africa' }, roster: [
       { starter: true, jersey: '5', position: { abbreviation: 'D' }, athlete: { displayName: 'Defender Dan' } }
     ] }
   ],
@@ -78,10 +88,24 @@ assert.deepStrictEqual(d.form[0].results[0], { result: 'W', score: '5-1', oppone
 assert.deepStrictEqual(d.info, { venue: 'Estadio Banorte', referee: 'Wilton Pereira Sampaio', attendance: 87000 });
 assert.deepStrictEqual(d.odds, { provider: 'DraftKings', details: 'MEX -1.5', overUnder: 2.5 });
 
+// broadcasts: media short names only, deduped
+assert.deepStrictEqual(d.broadcasts, ['FOX', 'Peacock']);
+
+// timeline: meaningful events only (kickoff dropped), tagged with side + goal flag
+assert.strictEqual(d.timeline.length, 3);
+assert.deepStrictEqual(
+  [d.timeline[0].clock, d.timeline[0].kind, d.timeline[0].side, d.timeline[0].goal],
+  ["9'", 'Goal', 'home', true]
+);
+assert.strictEqual(d.timeline[1].side, 'away');      // yellow card to team id 2 = away
+assert.strictEqual(d.timeline[2].kind, 'Substitution');
+assert.ok(d.timeline[0].text.includes('Quiñones'));
+
 // missing sections tolerated (live matches drop lastFiveGames)
 const sparse = parseSummary({ rosters: [], boxscore: {}, gameInfo: {} });
 assert.deepStrictEqual([sparse.lineups, sparse.stats.length, sparse.h2h, sparse.form, sparse.odds],
   [null, 0, null, null, null]);
+assert.deepStrictEqual([sparse.broadcasts, sparse.timeline], [[], []]);
 assert.strictEqual(parseSummary(null).lineups, null);
 
 // ---- event id lookup via scoreboard (id passthrough + pair match incl. swap) ----

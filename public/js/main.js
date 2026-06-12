@@ -11,6 +11,8 @@ import { renderBracket, wireBracket } from './bracket.js';
 import { renderStats } from './stats.js';
 import { wireMatchDetails } from './matchdetail.js';
 import { wireSquads } from './teams.js';
+import { onFollowChange } from './follow.js';
+import { updateLiveUI } from './live-ui.js';
 
 function wireView(view, el) {
   if (view === 'schedule') wireSchedule();
@@ -48,7 +50,9 @@ export async function refresh() {
       state.simAt = Date.now();
     }
     state.tournament = tour;
+    window.__matchByNum = Object.fromEntries(tour.matches.map(m => [m.num, m]));
     renderAll();
+    updateLiveUI();
   } catch {
     $('#data-status').textContent = 'REFRESH FAILED — RETRYING';
   }
@@ -61,6 +65,10 @@ document.querySelectorAll('.tab').forEach(btn => {
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + state.view));
   });
 });
+
+loadStadiums().then(() => { sigs.venues = null; renderAll(); });
+// following a team re-renders the views that reflect it
+onFollowChange(() => { sigs.teams = null; sigs.today = null; sigs.schedule = null; renderAll(); });
 
 loadStadiums().then(() => { sigs.venues = null; renderAll(); });
 refresh();

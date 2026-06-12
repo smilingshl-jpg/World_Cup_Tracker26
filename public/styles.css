@@ -50,6 +50,27 @@ body {
 .ticker-track a::before { content: "▪ "; color: var(--teal); }
 @keyframes tick { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
 
+/* ---- on-now live strip ---- */
+.onnow { display: flex; align-items: center; gap: 8px; overflow-x: auto; background: #160d0d; border-bottom: 1px solid var(--line); padding: 5px 12px; }
+.onnow-label { color: var(--red); font-weight: 700; font-size: 11px; letter-spacing: 1px; flex: none; animation: pulse 1.4s infinite; }
+.onnow-item { flex: none; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+.onnow-item:hover { border-color: var(--red); }
+.onnow-clock { color: var(--red); font-size: 10px; margin-left: 4px; }
+
+/* ---- toasts ---- */
+.toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+.toast { background: var(--panel-2); border: 1px solid var(--teal); border-left: 4px solid var(--teal); padding: 10px 16px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.5); animation: toast-in .35s ease; }
+.toast.out { opacity: 0; transform: translateX(20px); transition: all .4s; }
+@keyframes toast-in { from { opacity: 0; transform: translateX(20px); } }
+
+/* ---- follow / stars ---- */
+.star { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 17px; padding: 0 2px; line-height: 1; vertical-align: -1px; transition: color .2s, transform .2s; }
+.star:hover { transform: scale(1.2); color: var(--gold); }
+.star.on { color: var(--gold); }
+.team-card.followed { border-left: 3px solid var(--gold); }
+.vs-row.followed::before { content: "★"; position: absolute; left: 2px; top: 1px; font-size: 9px; color: var(--gold); z-index: 2; }
+.my-teams h2 { color: var(--gold); }
+
 main { max-width: 1280px; margin: 0 auto; padding: 20px; }
 .view { display: none; }
 .view.active { display: block; animation: fadein .35s ease; }
@@ -204,6 +225,17 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .form-chip.l { color: var(--red); border-color: var(--red); }
 .form-chip.d { color: var(--muted); }
 .h2h-line { font-size: 12px; color: var(--muted); padding: 1.5px 0; }
+.timeline { display: flex; flex-direction: column; gap: 2px; }
+.tl-ev { display: grid; grid-template-columns: 34px 18px 1fr; align-items: start; gap: 6px; font-size: 12px; padding: 2px 0; }
+.tl-ev.away { direction: rtl; text-align: right; }
+.tl-ev.away .tl-text { direction: ltr; }
+.tl-clock { color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 700; }
+.tl-text { color: var(--text); }
+.tl-ev.away .tl-text { color: var(--muted); }
+.watch-react { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wr-bcast { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.wr-btn { font-size: 11.5px; padding: 3px 10px; border: 1px solid var(--line); color: var(--text); text-decoration: none; letter-spacing: .5px; }
+.wr-btn:hover { border-color: var(--teal); color: var(--teal); }
 .info-line { color: var(--muted); font-size: 11.5px; letter-spacing: .5px; }
 details.squad { margin-top: 10px; }
 details.squad summary { cursor: pointer; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }

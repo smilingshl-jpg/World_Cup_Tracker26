@@ -1,3 +1,5 @@
+import { isFollowed } from './follow.js';
+
 export const $ = (sel) => document.querySelector(sel);
 export const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const flagImg = (flag, name) => flag
@@ -68,7 +70,8 @@ export function kitStripe(colors) {
 export function vsRow(m, colorsOf, extraHtml = '', opts = {}) {
   const c1 = colorsOf(m.team1)[0], c2 = colorsOf(m.team2)[0];
   const meta = esc(localTime(m.kickoff)) + (opts.hideGround ? '' : `<br>${esc(m.ground || '')}`);
-  return `<div class="vs-row ${opts.hideGround ? 'compact' : ''}" data-num="${m.num}" title="Click for match details" style="--c1:${c1};--c2:${c2};">
+  const fav = isFollowed(m.team1) || isFollowed(m.team2) ? ' followed' : '';
+  return `<div class="vs-row${opts.hideGround ? ' compact' : ''}${fav}" data-num="${m.num}" title="Click for match details" style="--c1:${c1};--c2:${c2};">
     <div class="side l"></div><div class="side r"></div>
     <div class="inner">
       <span class="match-meta">${meta}</span>

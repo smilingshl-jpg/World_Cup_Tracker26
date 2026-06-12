@@ -1,5 +1,6 @@
 import { state, colorsOf } from './state.js';
 import { $, esc, localTime, vsRow, relTime } from './format.js';
+import { followed, isFollowed } from './follow.js';
 
 export function renderToday() {
   const t = state.tournament;
@@ -10,8 +11,19 @@ export function renderToday() {
     .filter(m => m.status === 'upcoming' && m.kickoff && Date.parse(m.kickoff) > now)
     .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff))[0];
 
-  const sig = JSON.stringify([todays, next && next.num]); // countdown digits update separately
+  const follows = followed();
+  const myMatches = follows.length
+    ? t.matches
+        .filter(m => (isFollowed(m.team1) || isFollowed(m.team2)) && (m.status === 'live' || (m.kickoff && Date.parse(m.kickoff) > now)))
+        .sort((a, b) => Date.parse(a.kickoff || 0) - Date.parse(b.kickoff || 0))
+        .slice(0, 3)
+    : [];
+
+  const sig = JSON.stringify([todays, next && next.num, myMatches.map(m => [m.num, m.status, m.live]), follows]);
   let html = '';
+  if (myMatches.length) {
+    html += `<div class="card my-teams"><h2>⭐ Your teams</h2>${myMatches.map(m => vsRow(m, colorsOf)).join('')}</div>`;
+  }
   if (next) {
     html += `<div class="card">
       <h3>Next kickoff — ${esc(next.team1)} vs ${esc(next.team2)}, ${esc(localTime(next.kickoff))}</h3>

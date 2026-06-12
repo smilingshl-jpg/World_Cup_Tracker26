@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { esc, flagImg, localTime, scoreText, kitStripe } from './format.js';
+import { starBtn, isFollowed, toggleFollow } from './follow.js';
 
 export function renderTeams() {
   const t = state.tournament;
@@ -9,7 +10,10 @@ export function renderTeams() {
   const simByTeam = sim ? Object.fromEntries(sim.teams.map(s => [s.team, s])) : {};
 
   const cards = [...t.teams]
-    .sort((a, b) => (oddsByTeam[a.name]?.rank ?? 99) - (oddsByTeam[b.name]?.rank ?? 99))
+    .sort((a, b) => {
+      const fa = isFollowed(a.name) ? 0 : 1, fb = isFollowed(b.name) ? 0 : 1; // followed pinned first
+      return fa - fb || (oddsByTeam[a.name]?.rank ?? 99) - (oddsByTeam[b.name]?.rank ?? 99);
+    })
     .map(team => {
       const o = oddsByTeam[team.name];
       const s = simByTeam[team.name];
@@ -25,8 +29,8 @@ export function renderTeams() {
         .filter(m => m.group && (m.team1 === team.name || m.team2 === team.name))
         .map(m => `${esc(localTime(m.kickoff))} — ${esc(m.team1)} ${esc(scoreText(m))} ${esc(m.team2)}`)
         .join('<br>');
-      return `<div class="card team-card">
-        <h2>${flagImg(team.flag, team.name)}${esc(team.name)} <span class="chip">${esc(team.group || 'TBD')}</span></h2>
+      return `<div class="card team-card ${isFollowed(team.name) ? 'followed' : ''}">
+        <h2>${starBtn(team.name)} ${flagImg(team.flag, team.name)}${esc(team.name)} <span class="chip">${esc(team.group || 'TBD')}</span></h2>
         ${kitStripe(team.colors)}
         <div class="odds-line">${o ? `#${o.rank} favourite · ${(o.prob * 100).toFixed(1)}% (odds ${o.decimal.toFixed(o.decimal < 20 ? 2 : 0)})` : 'odds unavailable'}</div>
         ${simLine}${histLine}
@@ -45,6 +49,10 @@ const POSITION_ORDER = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'];
 
 // Lazy: roster fetched from ESPN the first time a card's Squad section is opened.
 export function wireSquads(el) {
+  el.querySelectorAll('button.star[data-follow]').forEach(b => b.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    toggleFollow(b.dataset.follow);
+  }));
   el.querySelectorAll('details.squad').forEach(d => {
     d.addEventListener('toggle', async () => {
       if (!d.open || d.dataset.loaded) return;

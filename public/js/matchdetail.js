@@ -97,9 +97,35 @@ function formChips(side) {
   return `<div class="form-line"><b>${esc(side.team)}</b> ${side.results.map(chip).join('')}</div>`;
 }
 
-function panelHtml(d) {
+const EVENT_ICON = (e) => e.goal ? '⚽' : /red card/i.test(e.kind) ? '🟥' : /yellow card/i.test(e.kind) ? '🟨' : /substitution/i.test(e.kind) ? '🔁' : '•';
+
+function timelineHtml(events) {
+  return `<div class="timeline">${events.map(e => `<div class="tl-ev ${e.side || ''}">
+    <span class="tl-clock">${esc(e.clock)}</span>
+    <span class="tl-icon">${EVENT_ICON(e)}</span>
+    <span class="tl-text">${esc(e.text || e.kind)}</span>
+  </div>`).join('')}</div>`;
+}
+
+// Watch & React: broadcasters (real) + highlights search + X / Reddit match threads.
+function watchReactHtml(d, num) {
+  const m = (window.__matchByNum && window.__matchByNum[num]) || {};
+  const q = encodeURIComponent(`${m.team1 || ''} ${m.team2 || ''} World Cup`);
+  const bcast = (d.broadcasts && d.broadcasts.length)
+    ? `<span class="wr-bcast">📺 ${d.broadcasts.map(esc).join(' · ')}</span>` : '';
+  return `<div class="detail-section watch-react">
+    ${bcast}
+    <a class="wr-btn" href="https://www.youtube.com/results?search_query=${q}+highlights" target="_blank" rel="noopener">▶ Highlights</a>
+    <a class="wr-btn" href="https://x.com/search?q=${q}&f=live" target="_blank" rel="noopener">𝕏 Reactions</a>
+    <a class="wr-btn" href="https://www.reddit.com/r/soccer/search/?q=${q}&sort=new" target="_blank" rel="noopener">🔥 r/soccer</a>
+  </div>`;
+}
+
+function panelHtml(d, num) {
   if (!d.available) return '<div class="detail-panel"><p class="scenario-note">No extra detail available for this match yet.</p></div>';
   const parts = [];
+  parts.push(watchReactHtml(d, num));
+  if (d.timeline && d.timeline.length) parts.push(`<div class="detail-section"><div class="label">Timeline</div>${timelineHtml(d.timeline)}</div>`);
   if (d.lineups) parts.push(`<div class="detail-section"><div class="label">Lineups</div>${lineupsHtml(d.lineups)}</div>`);
   if (d.stats && d.stats.length) parts.push(`<div class="detail-section"><div class="label">Match stats</div>${statBars(d.stats)}</div>`);
   if (d.form) parts.push(`<div class="detail-section"><div class="label">Form (last 5)</div>${d.form.map(formChips).join('')}</div>`);
@@ -124,7 +150,7 @@ async function showPanel(row, num) {
   try {
     const d = await fetchDetail(num);
     const fresh = document.createElement('div');
-    fresh.innerHTML = panelHtml(d);
+    fresh.innerHTML = panelHtml(d, num);
     const next = fresh.firstElementChild;
     next.style.setProperty('--c1', row.style.getPropertyValue('--c1')); // stat bars in kit colors
     next.style.setProperty('--c2', row.style.getPropertyValue('--c2'));
