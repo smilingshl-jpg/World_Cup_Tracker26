@@ -175,10 +175,11 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .pl { position: absolute; transform: translate(-50%, -50%); text-align: center; z-index: 1; }
 .pl .dot {
   display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; margin: 0 auto; border-radius: 50%;
-  border: 1.5px solid rgba(246, 241, 231, .8); color: #fff;
+  width: 27px; height: 27px; margin: 0 auto; border-radius: 50%;
+  border: 3px solid #f6f1e7; /* ring color set inline (team's 2nd color) */
   font-family: "Arial Black", Arial, sans-serif; font-size: 10.5px;
-  text-shadow: 0 1px 2px rgba(0,0,0,.9); box-shadow: 0 2px 5px rgba(0,0,0,.5);
+  /* dark outer outline separates the ring from the green pitch */
+  box-shadow: 0 0 0 1.5px rgba(10, 13, 16, .85), 0 2px 5px rgba(0,0,0,.5);
 }
 .pl .pname {
   display: block; margin-top: 1px; font-size: 9.5px; color: #f6f1e7;

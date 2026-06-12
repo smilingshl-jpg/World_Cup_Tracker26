@@ -1,4 +1,4 @@
-import { esc } from './format.js';
+import { esc, textOn } from './format.js';
 import { colorsOf } from './state.js';
 
 // Inline match-detail panels. Open panels survive signature-guard re-renders:
@@ -36,7 +36,10 @@ function pitchSide(l, mirror) {
   const rows = [1, ...String(l.formation).split('-').map(Number)];
   const starters = [...l.starters].sort((a, b) => (a.place ?? 99) - (b.place ?? 99));
   if (rows.some(isNaN) || rows.reduce((s, n) => s + n, 0) !== starters.length) return null;
-  const color = colorsOf(l.team)[0];
+  const cols = colorsOf(l.team);
+  const fill = cols[0];
+  const ring = cols[1] && cols[1].toLowerCase() !== fill.toLowerCase() ? cols[1] : '#f6f1e7';
+  const ink = textOn(fill);
   let idx = 0;
   const dots = [];
   rows.forEach((count, r) => {
@@ -47,7 +50,7 @@ function pitchSide(l, mirror) {
       const p = starters[idx];
       const y = ((j + 0.5) / count) * 100;
       dots.push(`<div class="pl" style="left:${x}%;top:${y}%;">
-        <span class="dot" style="background:${color};">${esc(p.jersey ?? '')}</span>
+        <span class="dot" style="background:${fill};border-color:${ring};color:${ink};">${esc(p.jersey ?? '')}</span>
         <span class="pname">${esc(lastName(p.name))}</span>
       </div>`);
     }

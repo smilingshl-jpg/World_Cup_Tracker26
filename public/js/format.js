@@ -47,6 +47,15 @@ export function relTime(iso) {
   if (h > 0) return `in ${h}h ${m}m`;
   return `in ${m}m`;
 }
+// black or white text for legibility on a given hex background
+export function textOn(hex) {
+  const h = String(hex).replace('#', '');
+  if (h.length < 6) return '#ffffff';
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  // perceived luminance
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#11161c' : '#ffffff';
+}
+
 export function kitStripe(colors) {
   if (!colors || !colors.length) return '';
   const n = colors.length;

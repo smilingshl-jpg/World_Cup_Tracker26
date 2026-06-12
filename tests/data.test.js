@@ -37,8 +37,10 @@ for (const s of stadiums) assert.ok(s.capacity > 40000 && s.stadium && s.city &&
   const { buildTournament } = require('../lib/tournament');
   const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'sample.json'), 'utf8'));
   const t = await buildTournament({ fetcher: { get: async () => fixture }, sourceUrl: 'x' });
+  const bra = t.teams.find(x => x.name === 'Brazil');
+  assert.deepStrictEqual(bra.colors, ['#ffdf00', '#009c3b', '#002776'], 'colors flow through payload');
   const mex = t.teams.find(x => x.name === 'Mexico');
-  assert.deepStrictEqual(mex.colors, ['#006847', '#ce1126', '#ffffff']);
+  assert.ok(Array.isArray(mex.colors) && mex.colors.length >= 2, 'mexico has colors');
   assert.strictEqual(mex.history.bestFinish, 'Quarter-finals (1970, 1986)');
   console.log('data.test.js OK');
 })().catch(e => { console.error(e); process.exit(1); });
