@@ -1,0 +1,15 @@
+# Template for a NAMED Cloudflare Tunnel config.
+# Copy this to  C:\Users\<you>\.cloudflared\config.yml  and edit the two placeholders.
+# (Created automatically when you run the `cloudflared tunnel create` step in HOSTING.md.)
+
+# The tunnel's UUID — printed by `cloudflared tunnel create worldcup`
+tunnel: REPLACE-WITH-TUNNEL-UUID
+# Path to that tunnel's credentials file (also printed by the create command)
+credentials-file: C:\Users\sahil\.cloudflared\REPLACE-WITH-TUNNEL-UUID.json
+
+ingress:
+  # your chosen hostname -> the local hub
+  - hostname: worldcup.example.com
+    service: http://localhost:3001
+  # required catch-all
+  - service: http_status:404

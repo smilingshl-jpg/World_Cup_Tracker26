@@ -3,3 +3,7 @@ data/cache/*
 !data/cache/.gitkeep
 .env
 .superpowers/
+# never commit Cloudflare Tunnel credentials
+*.pem
+.cloudflared/
+deploy/cloudflared-config.yml
