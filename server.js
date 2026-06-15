@@ -12,6 +12,7 @@ const { parseScoreboard, ESPN_URL, LIVE_TTL } = require('./lib/livescores');
 const espn = require('./lib/espn');
 const { findTeam } = require('./lib/teams');
 const STADIUMS = require('./data/stadiums.json');
+const CITY_HEALTH = require('./data/city-health.json');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -82,7 +83,8 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
         return sendJson(res, 200, { items: n.items, fetchedAt: n.fetchedAt || null });
       }
       if (url.pathname === '/api/stadiums') {
-        return sendJson(res, 200, STADIUMS);
+        // enrich each venue with its city's health/conditions profile (static)
+        return sendJson(res, 200, STADIUMS.map(s => ({ ...s, health: CITY_HEALTH.cities[s.city] || null })));
       }
       if (url.pathname === '/api/roster') {
         const team = url.searchParams.get('team') || '';

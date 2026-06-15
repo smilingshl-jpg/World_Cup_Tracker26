@@ -30,6 +30,23 @@ const allGrounds = stadiums.flatMap(s => s.grounds);
 assert.strictEqual(new Set(allGrounds).size, allGrounds.length, 'no duplicate ground aliases');
 for (const s of stadiums) assert.ok(s.capacity > 40000 && s.stadium && s.city && s.country);
 
+// city-health: covers exactly the 16 stadium cities, sane fields
+const cityHealth = require('../data/city-health.json');
+const stadiumCities = [...new Set(stadiums.map(s => s.city))];
+assert.deepStrictEqual(
+  Object.keys(cityHealth.cities).sort(), stadiumCities.sort(),
+  'city-health covers exactly the 16 stadium cities'
+);
+for (const [city, h] of Object.entries(cityHealth.cities)) {
+  for (const k of ['heatRisk', 'ozoneRisk', 'smokeRisk', 'composite']) {
+    assert.ok(h[k] >= 0 && h[k] <= 100, `${city}: ${k} in 0-100`);
+  }
+  assert.ok(h.pm25Annual > 0 && h.pm25Annual < 60, `${city}: pm25Annual sane`);
+  assert.ok(h.altitudeM >= 0, `${city}: altitudeM >= 0`);
+  assert.ok(['severe', 'high', 'moderate', 'lower'].includes(h.tier), `${city}: valid tier`);
+  assert.strictEqual(typeof h.roofed, 'boolean', `${city}: roofed boolean`);
+}
+
 // tournament payload exposes colors + history on team objects
 (async () => {
   const fs = require('fs');

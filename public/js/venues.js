@@ -6,6 +6,28 @@ export async function loadStadiums() {
   if (!stadiums) stadiums = await fetch('/api/stadiums').then(r => r.json()).catch(() => []);
 }
 
+const lvl = (v, mid, hi) => (v >= hi ? 'hi' : v >= mid ? 'mid' : 'lo');
+
+// conditions block: tier badge + per-factor mini-stats (0-100 risk; PM2.5 µg/m³; altitude m)
+function conditions(h) {
+  if (!h) return '';
+  const altTxt = h.altitudeM >= 1000 ? (h.altitudeM / 1000).toFixed(1) + 'k m' : h.altitudeM + ' m';
+  const f = [
+    ['Heat', h.heatRisk, lvl(h.heatRisk, 45, 75)],
+    ['Ozone', h.ozoneRisk, lvl(h.ozoneRisk, 45, 70)],
+    ['PM2.5', h.pm25Annual, lvl(h.pm25Annual, 10, 16)],
+    ['Alt', altTxt, lvl(h.altitudeM, 300, 1500)],
+    ['Smoke', h.smokeRisk, lvl(h.smokeRisk, 45, 70)]
+  ];
+  const stats = f.map(([k, v, l]) => `<span class="fct" data-lvl="${l}">${k} ${v}</span>`).join('');
+  const roof = h.roofed ? '<span class="chip roofed">Roofed</span>' : '';
+  return `<div class="conditions" title="${esc(h.notes || '')}">
+    <div class="label">Conditions</div>
+    <div class="cond-head"><span class="chip tier-${esc(h.tier)}">${esc(h.tier)} risk</span>${roof}</div>
+    <div class="factors">${stats}</div>
+  </div>`;
+}
+
 export function renderVenues() {
   const t = state.tournament;
   if (!stadiums) return { sig: 'loading', html: '<div class="card"><p>Loading venues…</p></div>' };
@@ -18,6 +40,7 @@ export function renderVenues() {
       <h2>${esc(s.stadium)}</h2>
       <div class="label">${esc(s.city)}, ${esc(s.country)}</div>
       <div class="cap">Capacity ${s.capacity.toLocaleString()} · ${ms.length} matches</div>
+      ${conditions(s.health)}
       ${ms.map(m => vsRow(m, colorsOf, '', { hideGround: true })).join('')}
     </div>`;
   });

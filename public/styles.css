@@ -134,6 +134,18 @@ tr.qualified td:first-child { box-shadow: inset 8px 0 0 -4px var(--green); }
 .chip.out { border-color: var(--line); color: var(--muted); }
 .chip.alive { border-color: var(--gold); color: var(--gold); }
 .chip.race { border-color: var(--teal); color: var(--teal); }
+.chip.tier-severe { border-color: var(--red); color: var(--red); }
+.chip.tier-high { border-color: #f59e0b; color: #f59e0b; }
+.chip.tier-moderate { border-color: var(--gold); color: var(--gold); }
+.chip.tier-lower { border-color: var(--green); color: var(--green); }
+.chip.roofed { border-color: var(--teal); color: var(--teal); }
+.conditions { margin: 10px 0 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.conditions .label { margin-bottom: 6px; }
+.cond-head { display: flex; gap: 6px; align-items: center; margin-bottom: 7px; }
+.factors { display: flex; flex-wrap: wrap; gap: 4px; }
+.fct { font-size: 10px; padding: 1px 6px; border: 1px solid var(--line); color: var(--muted); letter-spacing: .5px; white-space: nowrap; }
+.fct[data-lvl="mid"] { color: var(--gold); border-color: rgba(253,230,138,.4); }
+.fct[data-lvl="hi"] { color: var(--red); border-color: rgba(220,38,38,.55); }
 @keyframes pulse { 50% { opacity: .45; } }
 
 /* ---- versus banner match rows ---- */
