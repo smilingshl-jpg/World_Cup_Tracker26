@@ -1,0 +1,114 @@
+{
+  "_meta": {
+    "description": "Per-host-city health & environmental conditions for World Cup 2026 (Jun 11 - Jul 19). Scores are 0-100 match-day risk indices unless noted. Sources: Climate Central 2026 stadium heat study, NPR/World Weather Attribution, American Lung Association State of the Air 2025, IQAir/AQICN, FIFA. Keyed by the city names used in data/stadiums.json.",
+    "fields": {
+      "heatRisk": "0-100 June-July humid-heat / wet-bulb danger for players (raw climate, before stadium mitigation)",
+      "pm25Annual": "approx recent annual mean PM2.5, micrograms/m3 (WHO guideline 5)",
+      "ozoneRisk": "0-100 chronic ground-level ozone/smog burden",
+      "altitudeM": "stadium elevation in metres (physiological, affects all teams; acclimatization matters)",
+      "smokeRisk": "0-100 likelihood of episodic wildfire-smoke air-quality disruption in summer",
+      "composite": "0-100 weighted match-day physiological load = 0.40*heat + 0.20*smoke + 0.20*ozone + 0.10*pm25scaled + 0.10*altScaled",
+      "roofed": "true if climate-controlled / retractable roof meaningfully mitigates heat",
+      "tier": "severe | high | moderate | lower"
+    },
+    "generated": "2026-06-15"
+  },
+  "cities": {
+    "Miami": {
+      "stadium": "Hard Rock Stadium", "country": "USA",
+      "heatRisk": 95, "pm25Annual": 7, "ozoneRisk": 35, "altitudeM": 2, "smokeRisk": 10,
+      "composite": 49, "roofed": false, "tier": "severe",
+      "notes": "Hottest stadium overall; 95% of extreme-heat days climate-attributed. Oppressive humidity drives high wet-bulb. Air itself is clean (coastal). Heat, not pollution, is the danger."
+    },
+    "Monterrey": {
+      "stadium": "Estadio BBVA", "country": "Mexico",
+      "heatRisk": 92, "pm25Annual": 20, "ozoneRisk": 60, "altitudeM": 540, "smokeRisk": 15,
+      "composite": 53, "roofed": false, "tier": "severe",
+      "notes": "Top-tier humid-heat city, regularly wet-bulb >=28C. 88% of hot days climate-attributed. Industrial-corridor PM2.5/ozone adds load. Open-air."
+    },
+    "Houston": {
+      "stadium": "NRG Stadium", "country": "USA",
+      "heatRisk": 80, "pm25Annual": 11, "ozoneRisk": 80, "altitudeM": 12, "smokeRisk": 20,
+      "composite": 52, "roofed": true, "tier": "high",
+      "notes": "Among hottest, but the only fully climate-controlled high-risk venue (roof + AC) sharply mitigates. Petrochemical corridor = worst-tier ozone."
+    },
+    "Guadalajara": {
+      "stadium": "Estadio Akron", "country": "Mexico",
+      "heatRisk": 78, "pm25Annual": 17, "ozoneRisk": 55, "altitudeM": 1566, "smokeRisk": 20,
+      "composite": 55, "roofed": false, "tier": "high",
+      "notes": ">=10 extreme June-July days/yr; one of the four hottest stadiums. Moderate altitude (~1,566 m) plus valley smog. 71% of hot days climate-attributed."
+    },
+    "Mexico City": {
+      "stadium": "Estadio Azteca", "country": "Mexico",
+      "heatRisk": 60, "pm25Annual": 19, "ozoneRisk": 70, "altitudeM": 2240, "smokeRisk": 25,
+      "composite": 58, "roofed": false, "tier": "high",
+      "notes": "Defining factor is ALTITUDE (~2,240 m, ~25% less O2) - needs acclimatization, alters ball flight. Basin traps pollution; intense UV. Lower absolute temps than US cities."
+    },
+    "Dallas": {
+      "stadium": "AT&T Stadium", "country": "USA",
+      "heatRisk": 75, "pm25Annual": 10, "ozoneRisk": 75, "altitudeM": 131, "smokeRisk": 25,
+      "composite": 48, "roofed": true, "tier": "moderate",
+      "notes": "Highest extreme-heat threshold (89F) and recurrent humid heat, but roof + AC mitigate. Chronic DFW ozone non-attainment."
+    },
+    "Kansas City": {
+      "stadium": "Arrowhead Stadium", "country": "USA",
+      "heatRisk": 70, "pm25Annual": 8, "ozoneRisk": 50, "altitudeM": 270, "smokeRisk": 35,
+      "composite": 44, "roofed": false, "tier": "moderate",
+      "notes": "Flagged in the 6 high-risk heat cities; humid continental summer spikes. Open-air, no roof."
+    },
+    "Atlanta": {
+      "stadium": "Mercedes-Benz Stadium", "country": "USA",
+      "heatRisk": 72, "pm25Annual": 9, "ozoneRisk": 55, "altitudeM": 320, "smokeRisk": 20,
+      "composite": 42, "roofed": true, "tier": "lower",
+      "notes": "Hot, humid, regional ozone - but climate-controlled retractable roof + AC neutralize most match-day risk."
+    },
+    "Philadelphia": {
+      "stadium": "Lincoln Financial Field", "country": "USA",
+      "heatRisk": 62, "pm25Annual": 9, "ozoneRisk": 55, "altitudeM": 12, "smokeRisk": 70,
+      "composite": 47, "roofed": false, "tier": "moderate",
+      "notes": "One of 6 high-risk heat cities; among most exposed to Canadian wildfire smoke (Unhealthy repeatedly 2023-25). Open-air."
+    },
+    "New York / New Jersey": {
+      "stadium": "MetLife Stadium", "country": "USA",
+      "heatRisk": 60, "pm25Annual": 8, "ozoneRisk": 50, "altitudeM": 5, "smokeRisk": 75,
+      "composite": 46, "roofed": false, "tier": "moderate",
+      "notes": "Hosts the FINAL (Jul 19). High-risk heat city + highest smoke-disruption risk of any US venue (NYC 'worst air in world' Jun 2023, AQI 129 Aug 2025). Open-air."
+    },
+    "Boston": {
+      "stadium": "Gillette Stadium", "country": "USA",
+      "heatRisk": 58, "pm25Annual": 7, "ozoneRisk": 45, "altitudeM": 28, "smokeRisk": 72,
+      "composite": 44, "roofed": false, "tier": "moderate",
+      "notes": "Surprisingly among the 6 high-risk heat cities (humid-heat spikes). Significant Canadian-smoke exposure. Open-air."
+    },
+    "Los Angeles": {
+      "stadium": "SoFi Stadium", "country": "USA",
+      "heatRisk": 45, "pm25Annual": 13, "ozoneRisk": 95, "altitudeM": 30, "smokeRisk": 55,
+      "composite": 46, "roofed": true, "tier": "moderate",
+      "notes": "Worst US city for OZONE (25/26 yrs, ALA). Wildfire risk (Jan 2025 fires, downtown PM2.5 ~102). Coastal Inglewood + canopied SoFi keep heat lower."
+    },
+    "San Francisco Bay Area": {
+      "stadium": "Levi's Stadium", "country": "USA",
+      "heatRisk": 38, "pm25Annual": 9, "ozoneRisk": 45, "altitudeM": 4, "smokeRisk": 60,
+      "composite": 36, "roofed": false, "tier": "lower",
+      "notes": "Mild marine climate = low heat risk; good baseline air. Episodic wildfire smoke is the main hazard (hazardous AQI in 2020/21 seasons). Santa Clara afternoon sun-exposure on east stands."
+    },
+    "Seattle": {
+      "stadium": "Lumen Field", "country": "USA",
+      "heatRisk": 28, "pm25Annual": 7, "ozoneRisk": 30, "altitudeM": 5, "smokeRisk": 65,
+      "composite": 31, "roofed": false, "tier": "lower",
+      "notes": "Coolest, mildest US host = lowest heat risk; good baseline air. Late-summer BC/Cascades smoke is the only real concern, mostly after the tournament window."
+    },
+    "Toronto": {
+      "stadium": "BMO Field", "country": "Canada",
+      "heatRisk": 40, "pm25Annual": 7, "ozoneRisk": 40, "altitudeM": 76, "smokeRisk": 72,
+      "composite": 38, "roofed": false, "tier": "lower",
+      "notes": "Mild-warm summers, low heat risk. Canadian wildfire smoke is the headline air risk (AQI swung 36->78 in one June 2025 week). Open-air."
+    },
+    "Vancouver": {
+      "stadium": "BC Place", "country": "Canada",
+      "heatRisk": 25, "pm25Annual": 6, "ozoneRisk": 30, "altitudeM": 3, "smokeRisk": 45,
+      "composite": 28, "roofed": true, "tier": "lower",
+      "notes": "Cleanest profile of any host: coastal, mild, excellent baseline air + retractable roof. Only caveat: occasional BC-interior smoke late summer."
+    }
+  }
+}
