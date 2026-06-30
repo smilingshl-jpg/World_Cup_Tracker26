@@ -40,5 +40,30 @@ const { pathToFileURL } = require('url');
   const again = winProbSteps(pens, { sims: 4000, seed: 1 }).steps.map(s => s.pHome);
   assert.deepStrictEqual(steps.map(s => s.pHome), again, 'deterministic');
 
+  // ---- per-player direction tendency (modelled, seeded) ----
+  const { directionTendency, sampleZone } = await import(pathToFileURL(path.join(__dirname, '..', 'public', 'js', 'penalty.js')).href);
+  const zones = [
+    { id: 'TL', col: 0, row: 0, label: 'Top left', conversion: 0.90, share: 0.14 },
+    { id: 'TC', col: 1, row: 0, label: 'Top centre', conversion: 0.82, share: 0.05 },
+    { id: 'TR', col: 2, row: 0, label: 'Top right', conversion: 0.91, share: 0.14 },
+    { id: 'LL', col: 0, row: 1, label: 'Low left', conversion: 0.85, share: 0.27 },
+    { id: 'LC', col: 1, row: 1, label: 'Low centre', conversion: 0.70, share: 0.13 },
+    { id: 'LR', col: 2, row: 1, label: 'Low right', conversion: 0.86, share: 0.27 }
+  ];
+  const havertz = directionTendency('Kai Havertz', zones);
+  assert.strictEqual(havertz.length, 6, 'one probability per zone');
+  assert.ok(Math.abs(havertz.reduce((s, z) => s + z.p, 0) - 1) < 1e-9, 'tendency sums to 1');
+  for (const z of havertz) assert.ok(z.p >= 0 && z.p <= 1 && z.id && z.label, 'zone shape + range');
+  // stable per player, distinct between players
+  const havertz2 = directionTendency('Kai Havertz', zones);
+  assert.deepStrictEqual(havertz.map(z => z.p), havertz2.map(z => z.p), 'deterministic per player');
+  const messi = directionTendency('Lionel Messi', zones);
+  assert.ok(havertz.some((z, i) => Math.abs(z.p - messi[i].p) > 1e-6), 'different players differ');
+  // sampleZone is deterministic for a given rng and respects the distribution domain
+  const { mulberry32 } = await import(pathToFileURL(path.join(__dirname, '..', 'public', 'js', 'penalty.js')).href);
+  const picked = sampleZone(havertz, mulberry32(7));
+  assert.ok(zones.some(z => z.id === picked.id), 'sampleZone returns a real zone');
+  assert.strictEqual(sampleZone(havertz, mulberry32(7)).id, picked.id, 'sampleZone deterministic for fixed rng');
+
   console.log('penalty.test.js OK');
 })().catch(e => { console.error(e); process.exit(1); });

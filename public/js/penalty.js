@@ -11,6 +11,34 @@ export function mulberry32(a) {
   };
 }
 
+// Hash a string into a mulberry32 RNG (stable per string).
+function strRng(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return mulberry32(h >>> 0);
+}
+
+// Per-player shooting-direction tendency over the goal zones. Seeded + stable per
+// player, derived by perturbing the league shot-share. Illustrative — no feed records
+// real placement. Returns [{ id, label, col, row, p }] with p summing to 1.
+export function directionTendency(taker, zones, { seed = 'dir' } = {}) {
+  if (!Array.isArray(zones) || !zones.length) return [];
+  const rng = strRng(String(taker) + '|' + seed);
+  const raw = zones.map(z => {
+    const base = typeof z.share === 'number' ? z.share : 1 / zones.length;
+    return base * (0.35 + 1.7 * rng());
+  });
+  const sum = raw.reduce((a, b) => a + b, 0) || 1;
+  return zones.map((z, i) => ({ id: z.id, label: z.label, col: z.col, row: z.row, p: raw[i] / sum }));
+}
+
+// Pick a zone from a tendency distribution using rng() in [0,1).
+export function sampleZone(tendency, rng) {
+  let r = rng();
+  for (const t of tendency) { if ((r -= t.p) <= 0) return t; }
+  return tendency[tendency.length - 1];
+}
+
 // Interleave the two teams' kicks into real shootout order (home #1, away #1, home #2 …).
 export function orderedKicks(pens) {
   const home = pens.teams.find(t => t.side === 'home') || pens.teams[0];
