@@ -223,6 +223,18 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .so-dot.miss { background: transparent; border-color: var(--red); }
 .so-dot.on { outline: 2px solid var(--gold); outline-offset: 1px; }
 .so-cap { color: var(--muted); font-size: 10px; margin-top: 8px; line-height: 1.4; }
+.so-toggle { display: flex; gap: 6px; margin: 0 0 8px; }
+.so-vbtn { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; cursor: pointer; }
+.so-vbtn.on { border-color: var(--teal); color: var(--teal); }
+.so-dir-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
+.so-dir-cap { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.so-dir { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); color: var(--muted); }
+.so-dir.top { border-color: var(--teal); color: var(--teal); }
+.so-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+.so-table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--line); padding: 4px 6px; }
+.so-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.so-table tr.scored td:nth-child(4) { color: var(--green); }
+.so-table tr.miss td:nth-child(4) { color: var(--red); }
 .bracket-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .mode-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); padding: 5px 14px; cursor: pointer; font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
 .mode-btn.active { border-color: var(--teal); color: var(--teal); }
