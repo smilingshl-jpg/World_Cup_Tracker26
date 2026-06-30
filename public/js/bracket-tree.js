@@ -23,8 +23,10 @@ export function buildWings(bracket) {
         if (f1) next.push(f1);
         if (f2) next.push(f2);
       }
-      // a level must be complete (2x parent) to be drawable as a wing
-      if (next.length && next.length !== level.length * 2) return null;
+      // Tolerate pre-placed teams / byes: a feeder ref that isn't a W## sub-match
+      // (e.g. a host already slotted into the R16) just makes that branch stop short.
+      // We keep descending by depth so the wing still renders; cross-wing symmetry is
+      // enforced by the equal-depth check in buildWings.
       level = next;
     }
     return cols;

@@ -27,5 +27,13 @@ const { pathToFileURL } = require('url');
 
   // broken chain -> null (fallback to flat layout)
   assert.strictEqual(buildWings(bracket.filter(m => m.num !== 5)), null);
+
+  // pre-placed team / bye: a QF feeds from a literal team instead of a W## sub-match.
+  // Wings must still derive (matches real 2026 data where a host is slotted into the R16).
+  const withBye = bracket.map(m => m.num === 1 ? { ...m, ref1: 'Canada' } : m);
+  const wb = buildWings(withBye);
+  assert.ok(wb, 'wings still derive with a pre-placed team in one branch');
+  assert.deepStrictEqual(wb.left.map(col => col.map(m => m.num)), [[5], [1, 2]], 'bye branch stops short, wing intact');
+
   console.log('bracket-tree.test.js OK');
 })().catch(e => { console.error(e); process.exit(1); });
