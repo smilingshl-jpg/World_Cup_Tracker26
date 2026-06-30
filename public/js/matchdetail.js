@@ -1,10 +1,11 @@
 import { esc, textOn } from './format.js';
 import { colorsOf } from './state.js';
-import { winProbSteps } from './penalty.js';
+import { winProbSteps, directionTendency, sampleZone, mulberry32 } from './penalty.js';
 
 // shootout carousel state, keyed by match num (survives the 60s panel re-render)
 const soData = new Map();
 const soIndex = new Map();
+const soView = new Map(); // num -> 'player' | 'compiled' (default 'player')
 
 // Inline match-detail panels. Open panels survive signature-guard re-renders:
 // wireMatchDetails re-applies any panel whose match num is in `open`.
@@ -145,20 +146,13 @@ function buildShootout(d, num) {
   const zones = d.penaltyZones || [];
   const { X0, Y0, W, H } = SO_GEO, colW = W / 3, rowH = H / 2;
   const { home, away, steps } = winProbSteps(pens);
-  const pickZone = (scored, rnd) => {
-    if (!zones.length) return null;
-    const w = zones.map(z => scored ? Math.pow(z.conversion, 2) * (0.4 + z.share) : (1 - z.conversion) * (0.4 + z.share));
-    const sum = w.reduce((a, b) => a + b, 0); let r = rnd() * sum;
-    for (let i = 0; i < zones.length; i++) if ((r -= w[i]) <= 0) return zones[i];
-    return zones[zones.length - 1];
-  };
-  // attach a modelled placement to each ordered step
   for (const st of steps) {
-    const rnd = seedRand(`${num}|${st.team}|${st.n}|${st.scored}`);
-    const z = pickZone(st.scored, rnd);
+    st.tendency = directionTendency(st.taker, zones);
+    const place = mulberry32(2654435761 ^ (st.index * 2246822519));
+    const z = st.tendency.length ? sampleZone(st.tendency, place) : null;
     st.zone = z;
-    st.cx = z ? X0 + z.col * colW + colW * (0.22 + 0.56 * rnd()) : X0 + W / 2;
-    st.cy = z ? Y0 + z.row * rowH + rowH * (0.22 + 0.56 * rnd()) : Y0 + H / 2;
+    st.cx = z ? X0 + z.col * colW + colW * (0.22 + 0.56 * place()) : X0 + W / 2;
+    st.cy = z ? Y0 + z.row * rowH + rowH * (0.22 + 0.56 * place()) : Y0 + H / 2;
   }
   return { steps, home, away, zones };
 }
