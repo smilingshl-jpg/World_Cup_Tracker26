@@ -192,18 +192,36 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .aet { color: var(--muted); font-style: italic; }
 .shootout .so-result { font-size: 14px; margin: 2px 0 8px; }
 .shootout .so-result b { color: var(--gold); }
-.so-net { width: 100%; max-width: 360px; display: block; margin: 0 0 8px; }
+.so-net-wrap { max-width: 360px; }
+.so-net { width: 100%; display: block; margin: 0 0 8px; }
 .so-zpct { fill: var(--text); font-size: 9px; text-anchor: middle; font-family: system-ui; opacity: .85; }
-.so-kick { stroke-width: 2; }
+.so-kick { stroke-width: 2; cursor: pointer; transition: r .15s; }
 .so-kick.scored { fill: var(--teal); stroke: #0b3b34; }
 .so-kick.miss { fill: none; stroke: var(--red); }
-.so-seq { display: flex; flex-direction: column; gap: 4px; }
-.so-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.so-team { min-width: 90px; font-weight: 600; font-size: 12px; }
-.so-tick { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; }
-.so-tick.scored { color: var(--green); }
-.so-tick.miss { color: var(--red); }
-.so-tick em { font-style: normal; font-size: 10px; color: var(--muted); }
+.so-kick.cur { stroke: var(--gold); stroke-width: 3; }
+.so-stage { background: var(--panel-2); border: 1px solid var(--line); padding: 8px 10px; margin: 2px 0 8px; }
+.so-kickline { font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.so-kn { color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+.so-scored { color: var(--green); font-weight: 600; }
+.so-miss { color: var(--red); font-weight: 600; }
+.so-zhint { color: var(--muted); font-size: 11px; }
+.so-tally { margin-left: auto; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.so-wp-cap { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.so-wp-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.so-wp-name { min-width: 92px; font-size: 12px; }
+.so-wp-track { flex: 1; height: 8px; background: var(--ink); border: 1px solid var(--line); overflow: hidden; }
+.so-wp-fill { display: block; height: 100%; transition: width .25s; }
+.so-wp-fill.home { background: var(--teal); }
+.so-wp-fill.away { background: var(--gold); }
+.so-wp-pct { min-width: 34px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
+.so-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.so-arrow { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font-size: 16px; width: 30px; height: 28px; cursor: pointer; }
+.so-arrow:hover { border-color: var(--teal); color: var(--teal); }
+.so-dots { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.so-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer; padding: 0; }
+.so-dot.scored { background: var(--teal); }
+.so-dot.miss { background: transparent; border-color: var(--red); }
+.so-dot.on { outline: 2px solid var(--gold); outline-offset: 1px; }
 .so-cap { color: var(--muted); font-size: 10px; margin-top: 8px; line-height: 1.4; }
 .bracket-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .mode-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); padding: 5px 14px; cursor: pointer; font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }

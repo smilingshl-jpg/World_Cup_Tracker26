@@ -44,6 +44,26 @@ function sendStatic(res, urlPath) {
   });
 }
 
+// Live shootout enrichment: openfootball commits penalty totals only after a match
+// finalizes, so for in-progress knockout matches pull the ESPN shootout total and
+// surface it as score.p on the match + bracket entry, making the pens badge live.
+async function enrichLiveShootouts(t, f) {
+  const liveKO = (t.matches || []).filter(m => m.status === 'live' && !m.group && m.date && m.team1 && m.team2);
+  for (const m of liveKO) {
+    const sb = await f.get(espn.SCOREBOARD_DATE_URL(m.date.replace(/-/g, '')), espn.MINUTE_TTL);
+    const id = espn.findEvent(sb, m.team1, m.team2);
+    if (!id) continue;
+    const sum = espn.parseSummary(await f.get(espn.SUMMARY_URL(id), espn.MINUTE_TTL));
+    if (!sum.pens) continue;
+    const homeTeam = (sum.pens.teams.find(x => x.side === 'home') || {}).team;
+    const [a, b] = sum.pens.result;
+    const p = homeTeam === m.team1 ? [a, b] : [b, a];
+    m.score = { ...(m.score || {}), p, liveShootout: true };
+    const br = (t.bracket || []).find(x => x.num === m.num);
+    if (br) br.score = { ...(br.score || {}), p, liveShootout: true };
+  }
+}
+
 function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.env.ODDS_API_KEY || '' } = {}) {
   const f = fetcher || new Fetcher({});
   let simCache = { key: '', body: null };
@@ -56,7 +76,9 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
     const url = new URL(req.url, 'http://localhost');
     try {
       if (url.pathname === '/api/tournament') {
-        return sendJson(res, 200, await buildTournament({ fetcher: f, sourceUrl, liveEntries: await liveEntries() }));
+        const t = await buildTournament({ fetcher: f, sourceUrl, liveEntries: await liveEntries() });
+        try { await enrichLiveShootouts(t, f); } catch { /* live enrichment is best-effort */ }
+        return sendJson(res, 200, t);
       }
       if (url.pathname === '/api/odds') {
         return sendJson(res, 200, await getOutrightOdds({ fetcher: f, apiKey: oddsKey }));

@@ -1,5 +1,10 @@
 import { esc, textOn } from './format.js';
 import { colorsOf } from './state.js';
+import { winProbSteps } from './penalty.js';
+
+// shootout carousel state, keyed by match num (survives the 60s panel re-render)
+const soData = new Map();
+const soIndex = new Map();
 
 // Inline match-detail panels. Open panels survive signature-guard re-renders:
 // wireMatchDetails re-applies any panel whose match num is in `open`.
@@ -129,30 +134,17 @@ function seedRand(str) {
 }
 
 // Penalty shootout: net shaded by historical scoring probability (real stats) + real
-// kick outcomes/takers from ESPN. Marker POSITIONS are modelled (no feed records them).
-function shootoutHtml(d, num) {
+// kick outcomes/takers from ESPN, as a click-through carousel with a live win-probability
+// that swings after each kick. Marker POSITIONS are modelled (no feed records them).
+const pct = (x) => Math.round(x * 100);
+const SO_GEO = { X0: 34, Y0: 16, W: 232, H: 92 };
+
+function buildShootout(d, num) {
   const pens = d.pens;
-  if (!pens || !Array.isArray(pens.teams) || pens.teams.length < 2) return '';
+  if (!pens || !Array.isArray(pens.teams) || pens.teams.length < 2) return null;
   const zones = d.penaltyZones || [];
-  const m = (window.__matchByNum && window.__matchByNum[num]) || {};
-  const home = pens.teams.find(t => t.side === 'home') || pens.teams[0];
-  const away = pens.teams.find(t => t.side === 'away') || pens.teams[1];
-  const [ph, pa] = pens.result;
-  const winner = ph > pa ? home : away;
-  const pw = Math.max(ph, pa), pl = Math.min(ph, pa);
-  const sc = d.score && (d.score.et || d.score.ft);
-  const ftLine = sc ? `${esc(m.team1 || home.team)} ${sc[0]}–${sc[1]} ${esc(m.team2 || away.team)}${d.score.et ? ' <span class="aet">(a.e.t.)</span>' : ''} — ` : '';
-
-  // goal geometry (viewBox 0 0 300 150)
-  const X0 = 34, Y0 = 16, W = 232, H = 92, colW = W / 3, rowH = H / 2;
-  const shade = (c) => Math.max(0.08, Math.min(0.8, (c - 0.66) * 2.1));
-  const zoneSvg = zones.map(z => {
-    const x = X0 + z.col * colW, y = Y0 + z.row * rowH;
-    return `<rect x="${x}" y="${y}" width="${colW}" height="${rowH}" fill="rgba(34,197,94,${shade(z.conversion).toFixed(2)})" stroke="rgba(246,241,231,.15)"/>
-      <text x="${x + colW / 2}" y="${y + rowH / 2 + 4}" class="so-zpct">${Math.round(z.conversion * 100)}%</text>`;
-  }).join('');
-
-  // place each real kick into a zone (seeded): scored skew to high-conversion corners, misses to centre
+  const { X0, Y0, W, H } = SO_GEO, colW = W / 3, rowH = H / 2;
+  const { home, away, steps } = winProbSteps(pens);
   const pickZone = (scored, rnd) => {
     if (!zones.length) return null;
     const w = zones.map(z => scored ? Math.pow(z.conversion, 2) * (0.4 + z.share) : (1 - z.conversion) * (0.4 + z.share));
@@ -160,16 +152,27 @@ function shootoutHtml(d, num) {
     for (let i = 0; i < zones.length; i++) if ((r -= w[i]) <= 0) return zones[i];
     return zones[zones.length - 1];
   };
-  const markers = pens.teams.flatMap(side => side.kicks.map(k => {
-    const rnd = seedRand(`${num}|${side.team}|${k.n}|${k.scored}`);
-    const z = pickZone(k.scored, rnd);
-    if (!z) return '';
-    const cx = X0 + z.col * colW + colW * (0.22 + 0.56 * rnd());
-    const cy = Y0 + z.row * rowH + rowH * (0.22 + 0.56 * rnd());
-    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5.5" class="so-kick ${k.scored ? 'scored' : 'miss'}"><title>${esc(side.team)} — ${esc(k.taker)} (${k.scored ? 'scored' : 'missed'})</title></circle>`;
-  })).join('');
+  // attach a modelled placement to each ordered step
+  for (const st of steps) {
+    const rnd = seedRand(`${num}|${st.team}|${st.n}|${st.scored}`);
+    const z = pickZone(st.scored, rnd);
+    st.zone = z;
+    st.cx = z ? X0 + z.col * colW + colW * (0.22 + 0.56 * rnd()) : X0 + W / 2;
+    st.cy = z ? Y0 + z.row * rowH + rowH * (0.22 + 0.56 * rnd()) : Y0 + H / 2;
+  }
+  return { steps, home, away, zones };
+}
 
-  const net = `<svg viewBox="0 0 300 150" class="so-net" role="img" aria-label="Goal net shaded by historical penalty scoring probability with shootout kicks plotted">
+function netSvg(data, cur) {
+  const { X0, Y0, W, H } = SO_GEO, colW = W / 3, rowH = H / 2;
+  const shade = (c) => Math.max(0.08, Math.min(0.8, (c - 0.66) * 2.1));
+  const zoneSvg = data.zones.map(z => {
+    const x = X0 + z.col * colW, y = Y0 + z.row * rowH;
+    return `<rect x="${x}" y="${y}" width="${colW}" height="${rowH}" fill="rgba(34,197,94,${shade(z.conversion).toFixed(2)})" stroke="rgba(246,241,231,.15)"/>
+      <text x="${x + colW / 2}" y="${y + rowH / 2 + 4}" class="so-zpct">${pct(z.conversion)}%</text>`;
+  }).join('');
+  const markers = data.steps.map(st => `<circle cx="${st.cx.toFixed(1)}" cy="${st.cy.toFixed(1)}" r="${st.index === cur ? 8 : 5}" data-i="${st.index}" class="so-kick ${st.scored ? 'scored' : 'miss'} ${st.index === cur ? 'cur' : ''}" onclick="window.__soGo(${data.num},${st.index})"><title>${esc(st.team)} — ${esc(st.taker)} (${st.scored ? 'scored' : 'missed'})</title></circle>`).join('');
+  return `<svg viewBox="0 0 300 150" class="so-net" role="img" aria-label="Goal net shaded by historical penalty scoring probability with shootout kicks plotted">
     <rect x="${X0}" y="${Y0}" width="${W}" height="${H}" fill="rgba(255,255,255,.03)"/>
     ${zoneSvg}
     <g stroke="rgba(246,241,231,.10)">${[1, 2].map(i => `<line x1="${X0 + i * colW}" y1="${Y0}" x2="${X0 + i * colW}" y2="${Y0 + H}"/>`).join('')}<line x1="${X0}" y1="${Y0 + rowH}" x2="${X0 + W}" y2="${Y0 + rowH}"/></g>
@@ -177,19 +180,85 @@ function shootoutHtml(d, num) {
     <line x1="14" y1="${Y0 + H}" x2="286" y2="${Y0 + H}" stroke="rgba(246,241,231,.25)" stroke-width="2"/>
     ${markers}
   </svg>`;
+}
 
-  const seqRow = (side) => `<div class="so-row"><span class="so-team">${esc(side.team)}</span>${
-    side.kicks.map(k => `<span class="so-tick ${k.scored ? 'scored' : 'miss'}" title="${esc(k.taker)} — ${k.scored ? 'scored' : 'missed'}">${k.scored ? '●' : '○'}<em>${esc(lastName(k.taker))}</em></span>`).join('')
-  }</div>`;
+// the per-kick stage (description + win-probability bars) for carousel index `cur`
+function stageHtml(data, cur) {
+  const st = data.steps[cur];
+  const teamName = st.side === 'home' ? data.home.team : data.away.team;
+  const zoneTxt = st.zone ? `aimed ${st.zone.label.toLowerCase()} · ${pct(st.zone.conversion)}% zone` : '';
+  const bar = (name, p, side) => `<div class="so-wp-row">
+    <span class="so-wp-name">${esc(name)}</span>
+    <span class="so-wp-track"><span class="so-wp-fill ${side}" style="width:${pct(p)}%"></span></span>
+    <span class="so-wp-pct">${pct(p)}%</span></div>`;
+  return `<div class="so-kickline">
+      <span class="so-kn">Kick ${cur + 1}/${data.steps.length}</span>
+      <span class="so-${st.scored ? 'scored' : 'miss'}">${st.scored ? '● scored' : '○ missed'}</span>
+      <b>${esc(teamName)}</b> · ${esc(st.taker)} <span class="so-zhint">${esc(zoneTxt)}</span>
+      <span class="so-tally">${st.homeGoals}–${st.awayGoals}</span>
+    </div>
+    <div class="so-wp">
+      <div class="so-wp-cap">Win probability after this kick</div>
+      ${bar(data.home.team, st.pHome, 'home')}
+      ${bar(data.away.team, st.pAway, 'away')}
+    </div>`;
+}
 
-  return `<div class="detail-section shootout">
+function carouselHtml(data) {
+  const cur = soIndex.has(data.num) ? soIndex.get(data.num) : data.steps.length - 1;
+  const dots = data.steps.map(st => `<button class="so-dot ${st.scored ? 'scored' : 'miss'} ${st.index === cur ? 'on' : ''}" data-i="${st.index}" aria-label="Kick ${st.index + 1}" onclick="window.__soGo(${data.num},${st.index})"></button>`).join('');
+  return `<div class="so-net-wrap">${netSvg(data, cur)}</div>
+    <div class="so-stage" id="so-stage-${data.num}">${stageHtml(data, cur)}</div>
+    <div class="so-nav">
+      <button class="so-arrow" aria-label="Previous kick" onclick="window.__soStep(${data.num},-1)">‹</button>
+      <div class="so-dots">${dots}</div>
+      <button class="so-arrow" aria-label="Next kick" onclick="window.__soStep(${data.num},1)">›</button>
+    </div>`;
+}
+
+function shootoutHtml(d, num) {
+  const data = buildShootout(d, num);
+  if (!data) return '';
+  data.num = num;
+  soData.set(num, data);
+  if (soIndex.has(num)) soIndex.set(num, Math.min(soIndex.get(num), data.steps.length - 1));
+  const m = (window.__matchByNum && window.__matchByNum[num]) || {};
+  const ph = data.home.kicks.filter(k => k.scored).length, pa = data.away.kicks.filter(k => k.scored).length;
+  const winner = ph > pa ? data.home : data.away;
+  const sc = d.score && (d.score.et || d.score.ft);
+  const ftLine = sc ? `${esc(m.team1 || data.home.team)} ${sc[0]}–${sc[1]} ${esc(m.team2 || data.away.team)}${d.score.et ? ' <span class="aet">(a.e.t.)</span>' : ''} — ` : '';
+  return `<div class="detail-section shootout" id="so-${num}">
     <div class="label">Penalty shootout</div>
-    <div class="so-result">${ftLine}<b>${esc(winner.team)}</b> win ${pw}–${pl} on penalties</div>
-    ${net}
-    <div class="so-seq">${seqRow(home)}${seqRow(away)}</div>
-    <div class="so-cap">Net shaded by historical scoring probability per zone. Kick outcomes &amp; takers are real (ESPN); marker positions are illustrative — exact placement isn't recorded.</div>
+    <div class="so-result">${ftLine}<b>${esc(winner.team)}</b> win ${Math.max(ph, pa)}–${Math.min(ph, pa)} on penalties</div>
+    ${carouselHtml(data)}
+    <div class="so-cap">Click the dots, arrows, or a kick to step through. Net shaded by historical scoring probability per zone; win probability is a shootout model (≈${pct(data.steps[0] ? 0.74 : 0)}% per-kick conversion). Outcomes &amp; takers are real (ESPN); marker positions are illustrative.</div>
   </div>`;
 }
+
+// carousel navigation (re-renders only the stage + marker/dot highlight, no refetch)
+function soRender(num) {
+  const data = soData.get(num);
+  if (!data) return;
+  const cur = Math.max(0, Math.min(data.steps.length - 1, soIndex.has(num) ? soIndex.get(num) : data.steps.length - 1));
+  soIndex.set(num, cur);
+  const stage = document.getElementById('so-stage-' + num);
+  if (stage) stage.innerHTML = stageHtml(data, cur);
+  const root = document.getElementById('so-' + num);
+  if (!root) return;
+  root.querySelectorAll('.so-kick').forEach(el => {
+    const on = Number(el.dataset.i) === cur;
+    el.classList.toggle('cur', on);
+    el.setAttribute('r', on ? 8 : 5);
+  });
+  root.querySelectorAll('.so-dot').forEach(el => el.classList.toggle('on', Number(el.dataset.i) === cur));
+}
+window.__soGo = (num, i) => { soIndex.set(num, i); soRender(num); };
+window.__soStep = (num, dir) => {
+  const data = soData.get(num); if (!data) return;
+  const cur = soIndex.has(num) ? soIndex.get(num) : data.steps.length - 1;
+  soIndex.set(num, Math.max(0, Math.min(data.steps.length - 1, cur + dir)));
+  soRender(num);
+};
 
 function panelHtml(d, num) {
   if (!d.available) return '<div class="detail-panel"><p class="scenario-note">No extra detail available for this match yet.</p></div>';
