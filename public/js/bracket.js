@@ -95,7 +95,7 @@ export function renderBracket() {
     cols.push(`<div class="round-col"><div class="label">🏆 Final</div>${matchCell(wings.final, byNum, picks, bracketUI.mode, true)}${
       wings.third ? `<div class="label">Third place</div>${matchCell(wings.third, byNum, picks, bracketUI.mode)}` : ''}</div>`);
     for (let i = 0; i < R.length; i++) cols.push(colHtml(R[i], names[i] || R[i][0].round));
-    body = `<div class="bracket2" style="grid-template-columns:repeat(${cols.length}, minmax(150px, 1fr));">${cols.join('')}</div>`;
+    body = `<div class="bracket2" style="--cols:${cols.length};">${cols.join('')}</div>`;
   } else {
     const ROUND_ORDER = ['Round of 32', 'Round of 16', 'Quarter-final', 'Quarter-finals', 'Semi-final', 'Semi-finals', 'Match for third place', 'Third place', 'Final'];
     const rounds = new Map();

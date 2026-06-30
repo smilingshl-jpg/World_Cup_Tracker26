@@ -173,7 +173,7 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .day-header { margin: 18px 0 6px; color: var(--gold); font-weight: 700; font-style: italic; text-transform: uppercase; letter-spacing: 1px; }
 
 /* ---- two-wing TV bracket ---- */
-.bracket2 { display: grid; gap: 8px; overflow-x: auto; padding-bottom: 10px; }
+.bracket2 { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(150px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 10px; }
 .bracket2 .round-col { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; min-width: 150px; }
 .bracket2 .round-col > .label { text-align: center; }
 .bracket-match { background: var(--panel-2); border: 1px solid var(--line); padding: 6px 8px; font-size: 12px; }
@@ -187,7 +187,6 @@ details.scorers .goals { display: flex; gap: 24px; font-size: 12.5px; color: var
 .bracket-match .meta { color: var(--muted); font-size: 9px; margin-top: 3px; letter-spacing: 1px; font-family: system-ui; }
 .bracket-flat { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; }
 .bracket-flat .round-col { min-width: 210px; display: flex; flex-direction: column; gap: 10px; }
-@media (max-width: 700px) { .bracket2 .round-col { min-width: 116px; } }
 .pens-badge { display: inline-block; margin-left: 4px; font-size: 9px; color: var(--gold); border: 1px solid var(--line); padding: 0 3px; vertical-align: middle; }
 .aet { color: var(--muted); font-style: italic; }
 .shootout .so-result { font-size: 14px; margin: 2px 0 8px; }
@@ -345,4 +344,51 @@ details.squad summary { cursor: pointer; font-size: 11px; color: var(--muted); l
 .venue-card .cap { color: var(--muted); font-size: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 
 .footer { text-align: center; color: var(--muted); font-size: 11px; padding: 18px; border-top: 1px solid var(--line); margin-top: 30px; letter-spacing: .5px; }
-@media (max-width: 700px) { .data-status { display: none; } main { padding: 12px; } }
+/* ===== mobile (phones / small tablets) ===== */
+@media (max-width: 700px) {
+  main { padding: 12px; }
+  .data-status { display: none; }
+
+  /* tab bar: a single horizontally-scrollable row instead of wrapping */
+  .topbar { gap: 8px; padding: 8px 12px; }
+  .wordmark { font-size: 17px; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; padding: 9px 13px 7px; font-size: 13px; }
+
+  /* grids: 1 column on phones, 2 where there's room (~560px+) */
+  .group-grid, .team-grid, .venue-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .lineups { grid-template-columns: 1fr; gap: 12px; }
+
+  /* wide tables scroll inside their card rather than overflowing the page */
+  .card { overflow-x: auto; }
+  th, td { padding: 5px 7px; font-size: 12.5px; }
+
+  /* bracket: narrower columns; both layouts still scroll horizontally on their own */
+  .bracket2 { grid-template-columns: repeat(var(--cols, 6), minmax(112px, 1fr)); }
+  .bracket2 .round-col { min-width: 112px; }
+  .bracket-flat .round-col { min-width: 180px; }
+
+  /* match rows: tighten spacing, shrink the meta + score so team names keep room */
+  .vs-row .inner { gap: 8px; padding: 8px 10px; }
+  .match-meta { min-width: 0; font-size: 10px; }
+  .vs-row.compact .match-meta { min-width: 0; }
+  .vs-row .match-score { min-width: 54px; font-size: 14px; }
+
+  /* match-detail pitch: squarer + smaller markers so all 11 fit without overlap */
+  .pitch { aspect-ratio: 1 / 1; }
+  .pitch-head { font-size: 11px; }
+  .pl .dot { width: 22px; height: 22px; font-size: 9px; border-width: 2px; }
+  .pl .pname { font-size: 8.5px; max-width: 52px; }
+
+  /* stat bars: label drops to its own centered line, bar gets full width */
+  .stat-row { grid-template-columns: 40px 1fr 40px; }
+  .stat-row .sl { grid-column: 1 / -1; text-align: center; }
+
+  /* shootout + touch targets */
+  .so-net-wrap { max-width: 100%; }
+  .so-table { font-size: 11px; }
+  .so-dot { width: 16px; height: 16px; }
+  .so-arrow { width: 38px; height: 34px; }
+  .star { font-size: 20px; padding: 0 4px; }
+}
