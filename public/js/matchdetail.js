@@ -157,16 +157,22 @@ function buildShootout(d, num) {
   return { steps, home, away, zones };
 }
 
-function netSvg(data, cur) {
+// mode: 'player' (shade by steps[cur].tendency, only that marker) | 'compiled' (conversion, all markers)
+function netSvg(data, mode, cur) {
   const { X0, Y0, W, H } = SO_GEO, colW = W / 3, rowH = H / 2;
-  const shade = (c) => Math.max(0.08, Math.min(0.8, (c - 0.66) * 2.1));
+  const shade = (v) => Math.max(0.08, Math.min(0.82, v));
+  const tend = mode === 'player' && data.steps[cur] ? data.steps[cur].tendency : null;
+  const byId = tend ? Object.fromEntries(tend.map(t => [t.id, t.p])) : null;
   const zoneSvg = data.zones.map(z => {
     const x = X0 + z.col * colW, y = Y0 + z.row * rowH;
-    return `<rect x="${x}" y="${y}" width="${colW}" height="${rowH}" fill="rgba(34,197,94,${shade(z.conversion).toFixed(2)})" stroke="rgba(246,241,231,.15)"/>
-      <text x="${x + colW / 2}" y="${y + rowH / 2 + 4}" class="so-zpct">${pct(z.conversion)}%</text>`;
+    const v = mode === 'player' ? (byId ? byId[z.id] * 2.2 : 0) : (z.conversion - 0.66) * 2.1;
+    const label = mode === 'player' ? (byId ? pct(byId[z.id]) + '%' : '') : pct(z.conversion) + '%';
+    return `<rect x="${x}" y="${y}" width="${colW}" height="${rowH}" fill="rgba(34,197,94,${shade(v).toFixed(2)})" stroke="rgba(246,241,231,.15)"/>
+      <text x="${x + colW / 2}" y="${y + rowH / 2 + 4}" class="so-zpct">${label}</text>`;
   }).join('');
-  const markers = data.steps.map(st => `<circle cx="${st.cx.toFixed(1)}" cy="${st.cy.toFixed(1)}" r="${st.index === cur ? 8 : 5}" data-i="${st.index}" class="so-kick ${st.scored ? 'scored' : 'miss'} ${st.index === cur ? 'cur' : ''}" onclick="window.__soGo(${data.num},${st.index})"><title>${esc(st.team)} — ${esc(st.taker)} (${st.scored ? 'scored' : 'missed'})</title></circle>`).join('');
-  return `<svg viewBox="0 0 300 150" class="so-net" role="img" aria-label="Goal net shaded by historical penalty scoring probability with shootout kicks plotted">
+  const shown = mode === 'player' ? data.steps.filter(s => s.index === cur) : data.steps;
+  const markers = shown.map(st => `<circle cx="${st.cx.toFixed(1)}" cy="${st.cy.toFixed(1)}" r="${st.index === cur ? 8 : 5}" data-i="${st.index}" class="so-kick ${st.scored ? 'scored' : 'miss'} ${st.index === cur ? 'cur' : ''}" onclick="window.__soGo(${data.num},${st.index})"><title>${esc(st.team)} — ${esc(st.taker)} (${st.scored ? 'scored' : 'missed'})</title></circle>`).join('');
+  return `<svg viewBox="0 0 300 150" class="so-net" role="img" aria-label="${mode === 'player' ? 'Goal net shaded by this player\'s modelled shooting-direction probability' : 'Goal net shaded by historical scoring probability with every shootout kick plotted'}">
     <rect x="${X0}" y="${Y0}" width="${W}" height="${H}" fill="rgba(255,255,255,.03)"/>
     ${zoneSvg}
     <g stroke="rgba(246,241,231,.10)">${[1, 2].map(i => `<line x1="${X0 + i * colW}" y1="${Y0}" x2="${X0 + i * colW}" y2="${Y0 + H}"/>`).join('')}<line x1="${X0}" y1="${Y0 + rowH}" x2="${X0 + W}" y2="${Y0 + rowH}"/></g>
@@ -176,11 +182,17 @@ function netSvg(data, cur) {
   </svg>`;
 }
 
-// the per-kick stage (description + win-probability bars) for carousel index `cur`
+// the player's modelled direction breakdown: zones sorted by probability
+function directionBreakdown(st) {
+  if (!st.tendency || !st.tendency.length) return '';
+  const top = [...st.tendency].sort((a, b) => b.p - a.p).slice(0, 3);
+  const chips = top.map((t, i) => `<span class="so-dir ${i === 0 ? 'top' : ''}">${esc(t.label)} ${pct(t.p)}%</span>`).join('');
+  return `<div class="so-dir-wrap"><span class="so-dir-cap">Likely direction</span>${chips}</div>`;
+}
+
 function stageHtml(data, cur) {
   const st = data.steps[cur];
   const teamName = st.side === 'home' ? data.home.team : data.away.team;
-  const zoneTxt = st.zone ? `aimed ${st.zone.label.toLowerCase()} · ${pct(st.zone.conversion)}% zone` : '';
   const bar = (name, p, side) => `<div class="so-wp-row">
     <span class="so-wp-name">${esc(name)}</span>
     <span class="so-wp-track"><span class="so-wp-fill ${side}" style="width:${pct(p)}%"></span></span>
@@ -188,9 +200,10 @@ function stageHtml(data, cur) {
   return `<div class="so-kickline">
       <span class="so-kn">Kick ${cur + 1}/${data.steps.length}</span>
       <span class="so-${st.scored ? 'scored' : 'miss'}">${st.scored ? '● scored' : '○ missed'}</span>
-      <b>${esc(teamName)}</b> · ${esc(st.taker)} <span class="so-zhint">${esc(zoneTxt)}</span>
+      <b>${esc(teamName)}</b> · ${esc(st.taker)}
       <span class="so-tally">${st.homeGoals}–${st.awayGoals}</span>
     </div>
+    ${directionBreakdown(st)}
     <div class="so-wp">
       <div class="so-wp-cap">Win probability after this kick</div>
       ${bar(data.home.team, st.pHome, 'home')}
@@ -198,16 +211,43 @@ function stageHtml(data, cur) {
     </div>`;
 }
 
-function carouselHtml(data) {
-  const cur = soIndex.has(data.num) ? soIndex.get(data.num) : data.steps.length - 1;
+function toggleHtml(num, view) {
+  const btn = (mode, label) => `<button class="so-vbtn ${view === mode ? 'on' : ''}" onclick="window.__soView(${num},'${mode}')">${label}</button>`;
+  return `<div class="so-toggle">${btn('player', 'By player')}${btn('compiled', 'Compiled')}</div>`;
+}
+
+function playerHtml(data, cur) {
   const dots = data.steps.map(st => `<button class="so-dot ${st.scored ? 'scored' : 'miss'} ${st.index === cur ? 'on' : ''}" data-i="${st.index}" aria-label="Kick ${st.index + 1}" onclick="window.__soGo(${data.num},${st.index})"></button>`).join('');
-  return `<div class="so-net-wrap">${netSvg(data, cur)}</div>
+  return `<div class="so-net-wrap">${netSvg(data, 'player', cur)}</div>
     <div class="so-stage" id="so-stage-${data.num}">${stageHtml(data, cur)}</div>
     <div class="so-nav">
       <button class="so-arrow" aria-label="Previous kick" onclick="window.__soStep(${data.num},-1)">‹</button>
       <div class="so-dots">${dots}</div>
       <button class="so-arrow" aria-label="Next kick" onclick="window.__soStep(${data.num},1)">›</button>
     </div>`;
+}
+
+function compiledHtml(data) {
+  const rows = data.steps.map(st => `<tr class="${st.scored ? 'scored' : 'miss'}">
+      <td>${st.index + 1}</td><td>${esc(st.team)}</td><td>${esc(st.taker)}</td>
+      <td>${st.scored ? '● scored' : '○ missed'}</td>
+      <td>${st.zone ? esc(st.zone.label) : '—'}</td>
+      <td>${st.homeGoals}–${st.awayGoals}</td></tr>`).join('');
+  return `<div class="so-net-wrap">${netSvg(data, 'compiled', -1)}</div>
+    <table class="so-table">
+      <thead><tr><th>#</th><th>Team</th><th>Taker</th><th>Outcome</th><th>Direction</th><th>Score</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function soBody(num) {
+  const data = soData.get(num);
+  if (!data) return '';
+  const view = soView.get(num) || 'player';
+  if (view === 'compiled') return toggleHtml(num, view) + compiledHtml(data);
+  const cur = Math.max(0, Math.min(data.steps.length - 1, soIndex.has(num) ? soIndex.get(num) : data.steps.length - 1));
+  soIndex.set(num, cur);
+  return toggleHtml(num, view) + playerHtml(data, cur);
 }
 
 function shootoutHtml(d, num) {
@@ -224,27 +264,15 @@ function shootoutHtml(d, num) {
   return `<div class="detail-section shootout" id="so-${num}">
     <div class="label">Penalty shootout</div>
     <div class="so-result">${ftLine}<b>${esc(winner.team)}</b> win ${Math.max(ph, pa)}–${Math.min(ph, pa)} on penalties</div>
-    ${carouselHtml(data)}
-    <div class="so-cap">Click the dots, arrows, or a kick to step through. Net shaded by historical scoring probability per zone; win probability is a shootout model (≈${pct(data.steps[0] ? 0.74 : 0)}% per-kick conversion). Outcomes &amp; takers are real (ESPN); marker positions are illustrative.</div>
+    <div class="so-body" id="so-body-${num}">${soBody(num)}</div>
+    <div class="so-cap">"By player" shades the net by that taker's modelled shooting-direction probability and shows only their kick; "Compiled" shows every kick and the league scoring-probability net. Outcomes &amp; takers are real (ESPN); direction probabilities and marker positions are modelled, not recorded.</div>
   </div>`;
 }
 
-// carousel navigation (re-renders only the stage + marker/dot highlight, no refetch)
+// re-render the whole shootout body (view + net + stage/table) from current state
 function soRender(num) {
-  const data = soData.get(num);
-  if (!data) return;
-  const cur = Math.max(0, Math.min(data.steps.length - 1, soIndex.has(num) ? soIndex.get(num) : data.steps.length - 1));
-  soIndex.set(num, cur);
-  const stage = document.getElementById('so-stage-' + num);
-  if (stage) stage.innerHTML = stageHtml(data, cur);
-  const root = document.getElementById('so-' + num);
-  if (!root) return;
-  root.querySelectorAll('.so-kick').forEach(el => {
-    const on = Number(el.dataset.i) === cur;
-    el.classList.toggle('cur', on);
-    el.setAttribute('r', on ? 8 : 5);
-  });
-  root.querySelectorAll('.so-dot').forEach(el => el.classList.toggle('on', Number(el.dataset.i) === cur));
+  const el = document.getElementById('so-body-' + num);
+  if (el) el.innerHTML = soBody(num);
 }
 window.__soGo = (num, i) => { soIndex.set(num, i); soRender(num); };
 window.__soStep = (num, dir) => {
@@ -253,6 +281,7 @@ window.__soStep = (num, dir) => {
   soIndex.set(num, Math.max(0, Math.min(data.steps.length - 1, cur + dir)));
   soRender(num);
 };
+window.__soView = (num, mode) => { soView.set(num, mode); soRender(num); };
 
 function panelHtml(d, num) {
   if (!d.available) return '<div class="detail-panel"><p class="scenario-note">No extra detail available for this match yet.</p></div>';
