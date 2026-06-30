@@ -47,6 +47,19 @@ for (const [city, h] of Object.entries(cityHealth.cities)) {
   assert.strictEqual(typeof h.roofed, 'boolean', `${city}: roofed boolean`);
 }
 
+// penalty-zones: 6-zone goal grid, sane probabilities, shares ~sum to 1
+const penaltyZones = require('../data/penalty-zones.json').zones;
+assert.strictEqual(penaltyZones.length, 6, '6 net zones (3 cols x 2 rows)');
+let shareSum = 0;
+for (const z of penaltyZones) {
+  assert.ok(z.col >= 0 && z.col <= 2 && z.row >= 0 && z.row <= 1, `${z.id}: grid coords`);
+  assert.ok(z.conversion > 0 && z.conversion <= 1, `${z.id}: conversion 0-1`);
+  assert.ok(z.share >= 0 && z.share <= 1, `${z.id}: share 0-1`);
+  shareSum += z.share;
+}
+assert.ok(Math.abs(shareSum - 1) < 0.02, 'zone shares sum to ~1');
+assert.strictEqual(new Set(penaltyZones.map(z => z.col + ',' + z.row)).size, 6, 'no duplicate zone cells');
+
 // tournament payload exposes colors + history on team objects
 (async () => {
   const fs = require('fs');

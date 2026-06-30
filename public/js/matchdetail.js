@@ -121,9 +121,80 @@ function watchReactHtml(d, num) {
   </div>`;
 }
 
+// Deterministic RNG seeded from a string (so a kick always lands in the same spot).
+function seedRand(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return () => { h += 0x6d2b79f5; let t = h; t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+// Penalty shootout: net shaded by historical scoring probability (real stats) + real
+// kick outcomes/takers from ESPN. Marker POSITIONS are modelled (no feed records them).
+function shootoutHtml(d, num) {
+  const pens = d.pens;
+  if (!pens || !Array.isArray(pens.teams) || pens.teams.length < 2) return '';
+  const zones = d.penaltyZones || [];
+  const m = (window.__matchByNum && window.__matchByNum[num]) || {};
+  const home = pens.teams.find(t => t.side === 'home') || pens.teams[0];
+  const away = pens.teams.find(t => t.side === 'away') || pens.teams[1];
+  const [ph, pa] = pens.result;
+  const winner = ph > pa ? home : away;
+  const pw = Math.max(ph, pa), pl = Math.min(ph, pa);
+  const sc = d.score && (d.score.et || d.score.ft);
+  const ftLine = sc ? `${esc(m.team1 || home.team)} ${sc[0]}–${sc[1]} ${esc(m.team2 || away.team)}${d.score.et ? ' <span class="aet">(a.e.t.)</span>' : ''} — ` : '';
+
+  // goal geometry (viewBox 0 0 300 150)
+  const X0 = 34, Y0 = 16, W = 232, H = 92, colW = W / 3, rowH = H / 2;
+  const shade = (c) => Math.max(0.08, Math.min(0.8, (c - 0.66) * 2.1));
+  const zoneSvg = zones.map(z => {
+    const x = X0 + z.col * colW, y = Y0 + z.row * rowH;
+    return `<rect x="${x}" y="${y}" width="${colW}" height="${rowH}" fill="rgba(34,197,94,${shade(z.conversion).toFixed(2)})" stroke="rgba(246,241,231,.15)"/>
+      <text x="${x + colW / 2}" y="${y + rowH / 2 + 4}" class="so-zpct">${Math.round(z.conversion * 100)}%</text>`;
+  }).join('');
+
+  // place each real kick into a zone (seeded): scored skew to high-conversion corners, misses to centre
+  const pickZone = (scored, rnd) => {
+    if (!zones.length) return null;
+    const w = zones.map(z => scored ? Math.pow(z.conversion, 2) * (0.4 + z.share) : (1 - z.conversion) * (0.4 + z.share));
+    const sum = w.reduce((a, b) => a + b, 0); let r = rnd() * sum;
+    for (let i = 0; i < zones.length; i++) if ((r -= w[i]) <= 0) return zones[i];
+    return zones[zones.length - 1];
+  };
+  const markers = pens.teams.flatMap(side => side.kicks.map(k => {
+    const rnd = seedRand(`${num}|${side.team}|${k.n}|${k.scored}`);
+    const z = pickZone(k.scored, rnd);
+    if (!z) return '';
+    const cx = X0 + z.col * colW + colW * (0.22 + 0.56 * rnd());
+    const cy = Y0 + z.row * rowH + rowH * (0.22 + 0.56 * rnd());
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5.5" class="so-kick ${k.scored ? 'scored' : 'miss'}"><title>${esc(side.team)} — ${esc(k.taker)} (${k.scored ? 'scored' : 'missed'})</title></circle>`;
+  })).join('');
+
+  const net = `<svg viewBox="0 0 300 150" class="so-net" role="img" aria-label="Goal net shaded by historical penalty scoring probability with shootout kicks plotted">
+    <rect x="${X0}" y="${Y0}" width="${W}" height="${H}" fill="rgba(255,255,255,.03)"/>
+    ${zoneSvg}
+    <g stroke="rgba(246,241,231,.10)">${[1, 2].map(i => `<line x1="${X0 + i * colW}" y1="${Y0}" x2="${X0 + i * colW}" y2="${Y0 + H}"/>`).join('')}<line x1="${X0}" y1="${Y0 + rowH}" x2="${X0 + W}" y2="${Y0 + rowH}"/></g>
+    <g stroke="var(--gold)" stroke-width="3.5" fill="none"><line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y0 + H}"/><line x1="${X0 + W}" y1="${Y0}" x2="${X0 + W}" y2="${Y0 + H}"/><line x1="${X0}" y1="${Y0}" x2="${X0 + W}" y2="${Y0}"/></g>
+    <line x1="14" y1="${Y0 + H}" x2="286" y2="${Y0 + H}" stroke="rgba(246,241,231,.25)" stroke-width="2"/>
+    ${markers}
+  </svg>`;
+
+  const seqRow = (side) => `<div class="so-row"><span class="so-team">${esc(side.team)}</span>${
+    side.kicks.map(k => `<span class="so-tick ${k.scored ? 'scored' : 'miss'}" title="${esc(k.taker)} — ${k.scored ? 'scored' : 'missed'}">${k.scored ? '●' : '○'}<em>${esc(lastName(k.taker))}</em></span>`).join('')
+  }</div>`;
+
+  return `<div class="detail-section shootout">
+    <div class="label">Penalty shootout</div>
+    <div class="so-result">${ftLine}<b>${esc(winner.team)}</b> win ${pw}–${pl} on penalties</div>
+    ${net}
+    <div class="so-seq">${seqRow(home)}${seqRow(away)}</div>
+    <div class="so-cap">Net shaded by historical scoring probability per zone. Kick outcomes &amp; takers are real (ESPN); marker positions are illustrative — exact placement isn't recorded.</div>
+  </div>`;
+}
+
 function panelHtml(d, num) {
   if (!d.available) return '<div class="detail-panel"><p class="scenario-note">No extra detail available for this match yet.</p></div>';
   const parts = [];
+  if (d.pens) parts.push(shootoutHtml(d, num));
   parts.push(watchReactHtml(d, num));
   if (d.timeline && d.timeline.length) parts.push(`<div class="detail-section"><div class="label">Timeline</div>${timelineHtml(d.timeline)}</div>`);
   if (d.lineups) parts.push(`<div class="detail-section"><div class="label">Lineups</div>${lineupsHtml(d.lineups)}</div>`);

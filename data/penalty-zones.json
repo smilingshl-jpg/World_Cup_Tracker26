@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "description": "Historical penalty scoring probability by goal zone, used to shade the shootout net visual. Goal split into a 3-column x 2-row grid (columns left/centre/right from the shooter's view; rows top/low). 'conversion' = share of penalties aimed at that zone that are scored; 'share' = share of all penalties aimed there. Values are representative figures consistent with published penalty analytics (analyses of several thousand professional penalties); approximate, for visualization only.",
+    "source": "Aggregated public penalty-analytics summaries (e.g. large-sample studies of professional penalties)",
+    "grid": { "cols": 3, "rows": 2 }
+  },
+  "zones": [
+    { "id": "TL", "col": 0, "row": 0, "label": "Top left", "conversion": 0.90, "share": 0.14 },
+    { "id": "TC", "col": 1, "row": 0, "label": "Top centre", "conversion": 0.82, "share": 0.05 },
+    { "id": "TR", "col": 2, "row": 0, "label": "Top right", "conversion": 0.91, "share": 0.14 },
+    { "id": "LL", "col": 0, "row": 1, "label": "Low left", "conversion": 0.85, "share": 0.27 },
+    { "id": "LC", "col": 1, "row": 1, "label": "Low centre", "conversion": 0.70, "share": 0.13 },
+    { "id": "LR", "col": 2, "row": 1, "label": "Low right", "conversion": 0.86, "share": 0.27 }
+  ]
+}

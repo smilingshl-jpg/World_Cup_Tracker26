@@ -10,11 +10,29 @@ export const bracketUI = { mode: 'real' }; // 'real' | 'picks'
 function loadPicks() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } }
 function savePicks(p) { localStorage.setItem(LS_KEY, JSON.stringify(p)); }
 
-function slotScore(m, team) {
+// Decisive goals shown in the slot are FT (or AET) goals — never the penalty count.
+function slotGoals(m, team) {
   if (!m.score) return '';
-  const s = m.score.p || m.score.et || m.score.ft;
+  const s = m.score.et || m.score.ft;
   if (!s) return '';
   return team === m.team1 ? s[0] : team === m.team2 ? s[1] : '';
+}
+function slotPens(m, team) {
+  if (!m.score || !m.score.p) return '';
+  const v = team === m.team1 ? m.score.p[0] : team === m.team2 ? m.score.p[1] : '';
+  return v === '' ? '' : `<span class="pens-badge" title="penalty shootout">${v}</span>`;
+}
+// e.g. " · AET · Croatia 4–2 pens" appended to the match meta line.
+function koTags(m) {
+  if (!m.score) return '';
+  const tags = [];
+  if (m.score.et) tags.push('AET');
+  if (m.score.p) {
+    const [a, b] = m.score.p;
+    const w = a > b ? m.team1 : m.team2;
+    tags.push(`${esc(w)} ${Math.max(a, b)}–${Math.min(a, b)} pens`);
+  }
+  return tags.length ? ` · ${tags.join(' · ')}` : '';
 }
 
 function matchCell(m, byNum, picks, mode, big = false) {
@@ -36,21 +54,21 @@ function matchCell(m, byNum, picks, mode, big = false) {
     return `<div class="slot ${placeholder ? 'placeholder' : ''} ${w === team && resolved ? 'winner' : ''} ${pickable ? 'pickable' : ''} ${picked ? 'picked' : ''}"
       style="--kit:${kitOf(team)};" ${pickable ? `data-pick-match="${m.num}" data-pick-team="${esc(team)}"` : ''}>
       <span>${placeholder ? '' : flagImg(tm[team].flag, team)}${esc(team || '—')}</span>
-      <span>${slotScore(m, team)}</span>
+      <span>${slotGoals(m, team)}${slotPens(m, team)}</span>
     </div>`;
   };
 
   return `<div class="bracket-match ${big ? 'final-match' : ''}">
     ${slot(t1, r1)}
     ${slot(t2, r2)}
-    <div class="meta">${esc(localTime(m.kickoff))} · ${esc(m.ground || '')}</div>
+    <div class="meta">${esc(localTime(m.kickoff))} · ${esc(m.ground || '')}${koTags(m)}</div>
   </div>`;
 }
 
 export function renderBracket() {
   const t = state.tournament;
   const picks = loadPicks();
-  const sig = JSON.stringify([t.bracket, bracketUI.mode, picks, window.innerWidth >= 1100]);
+  const sig = JSON.stringify([t.bracket, bracketUI.mode, picks]);
   if (!t.bracket.length) return { sig, html: '<div class="card"><p>Knockout fixtures appear once published.</p></div>' };
 
   const byNum = new Map(t.bracket.map(m => [m.num, m]));
@@ -63,8 +81,9 @@ export function renderBracket() {
     ${bracketUI.mode === 'picks' ? '<span class="scenario-note">Click a team to advance it. Unresolved slots unlock as the group stage finishes.</span>' : ''}
   </div>`;
 
-  const wide = window.innerWidth >= 1100;
-  const wings = wide ? buildWings(t.bracket) : null;
+  // Always render the two-sided (two-wing) layout when derivable; .bracket2 scrolls
+  // horizontally on narrow screens. Flat layout is only a fallback for underivable data.
+  const wings = buildWings(t.bracket);
   let body;
   if (wings) {
     const names = ['Semi-final', 'Quarter-final', 'Round of 16', 'Round of 32'];

@@ -1,7 +1,7 @@
 // tests/espn.test.js
 'use strict';
 const assert = require('assert');
-const { parseTeams, parseRoster, parseSummary, findEvent } = require('../lib/espn');
+const { parseTeams, parseRoster, parseSummary, parseShootout, findEvent } = require('../lib/espn');
 const { parseScoreboard } = require('../lib/livescores');
 
 // ---- teams: ESPN displayName -> canonical name -> id ----
@@ -120,5 +120,40 @@ assert.strictEqual(parseScoreboard(scoreboard)[0].id, '760415', 'parseScoreboard
 assert.strictEqual(findEvent(scoreboard, 'Mexico', 'South Africa'), '760415');
 assert.strictEqual(findEvent(scoreboard, 'South Africa', 'Mexico'), '760415', 'reversed order matches');
 assert.strictEqual(findEvent(scoreboard, 'Spain', 'France'), null);
+
+// ---- penalty shootout (real ESPN structure: per-team shots; entry.id = team id) ----
+const koSides = { '477': 'home', '205': 'away' }; // Croatia home, Brazil away (event 633843)
+const shootout = [
+  { id: '205', team: 'Brazil', shots: [
+    { shotNumber: 1, player: 'Rodrygo', didScore: false },
+    { shotNumber: 2, player: 'Casemiro', didScore: true },
+    { shotNumber: 3, player: 'Pedro ', didScore: true },
+    { shotNumber: 4, player: 'Marquinhos', didScore: false }
+  ] },
+  { id: '477', team: 'Croatia', shots: [
+    { shotNumber: 1, player: 'Nikola Vlasic', didScore: true },
+    { shotNumber: 2, player: 'Lovro Majer', didScore: true },
+    { shotNumber: 3, player: 'Luka Modric', didScore: true },
+    { shotNumber: 4, player: 'Mislav Orsic', didScore: true }
+  ] }
+];
+const so = parseShootout(shootout, koSides);
+assert.deepStrictEqual(so.result, [4, 2], 'home(Croatia) 4 – away(Brazil) 2');
+const cro = so.teams.find(t => t.side === 'home');
+assert.strictEqual(cro.team, 'Croatia');
+assert.strictEqual(cro.kicks.length, 4);
+assert.strictEqual(cro.kicks.filter(k => k.scored).length, 4, 'Croatia scored all 4');
+const bra = so.teams.find(t => t.side === 'away');
+assert.strictEqual(bra.kicks[0].scored, false, 'Rodrygo missed first');
+assert.strictEqual(bra.kicks[2].taker, 'Pedro', 'taker name trimmed');
+assert.deepStrictEqual(bra.kicks.map(k => k.n), [1, 2, 3, 4], 'kicks sorted by shot number');
+// flows through parseSummary, mapping sides from rosters
+const dko = parseSummary({ rosters: [
+  { homeAway: 'home', team: { id: '477', displayName: 'Croatia' } },
+  { homeAway: 'away', team: { id: '205', displayName: 'Brazil' } }
+], shootout });
+assert.deepStrictEqual(dko.pens.result, [4, 2], 'pens flow through parseSummary');
+assert.strictEqual(parseSummary({ rosters: [] }).pens, null, 'no shootout -> null');
+assert.strictEqual(parseShootout(null, {}), null);
 
 console.log('espn.test.js OK');

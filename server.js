@@ -13,6 +13,7 @@ const espn = require('./lib/espn');
 const { findTeam } = require('./lib/teams');
 const STADIUMS = require('./data/stadiums.json');
 const CITY_HEALTH = require('./data/city-health.json');
+const PENALTY_ZONES = require('./data/penalty-zones.json');
 
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -106,7 +107,9 @@ function createServer({ fetcher, sourceUrl = DEFAULT_SOURCE, oddsKey = process.e
         const eventId = espn.findEvent(sb, match.team1, match.team2);
         if (!eventId) return sendJson(res, 200, { num, available: false });
         const detail = espn.parseSummary(await f.get(espn.SUMMARY_URL(eventId), espn.MINUTE_TTL));
-        return sendJson(res, 200, { num, available: true, ...detail });
+        const out = { num, available: true, score: match.score || null, ...detail };
+        if (out.pens) out.penaltyZones = PENALTY_ZONES.zones; // net-probability shading
+        return sendJson(res, 200, out);
       }
       if (url.pathname.startsWith('/api/')) {
         return sendJson(res, 404, { error: 'unknown endpoint' });
