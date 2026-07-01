@@ -27,6 +27,20 @@ Optional live odds (free key from https://the-odds-api.com):
 
 Without a key the site uses a bundled real-odds snapshot (DraftKings, 2026-06-05).
 
+## Host it online (Cloudflare Tunnel)
+
+Expose the locally-running server on a public HTTPS URL — no ports opened, free.
+`host.ps1` starts the server and the tunnel together (Ctrl+C stops both).
+
+    .\host.ps1                    # quick tunnel: random https://<name>.trycloudflare.com
+
+For a stable URL on your own domain (optionally locked to your login):
+
+    .\host.ps1 -Named worldcup    # named tunnel — one-time setup below
+
+Full walkthrough (login, DNS, Cloudflare Access lockdown, always-on service):
+[HOSTING.md](HOSTING.md).
+
 ## Data sources
 
 - Fixtures, results & scorers: openfootball/worldcup.json (public domain, no key, cached 5 min)
@@ -40,4 +54,4 @@ Without a key the site uses a bundled real-odds snapshot (DraftKings, 2026-06-05
 
 ## Tests
 
-    npm test           # 13 plain-assert suites
+    npm test           # 16 plain-assert suites
