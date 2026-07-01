@@ -28,7 +28,7 @@ Optional live odds (free key from https://the-odds-api.com):
 Without a key the site uses a bundled real-odds snapshot (DraftKings, 2026-06-05).
 
 ## Host it online (Cloudflare Tunnel)
-
+cloudflared tunnel --url http://localhost:3001
 Expose the locally-running server on a public HTTPS URL — no ports opened, free.
 `host.ps1` starts the server and the tunnel together (Ctrl+C stops both).
 
@@ -40,6 +40,8 @@ For a stable URL on your own domain (optionally locked to your login):
 
 Full walkthrough (login, DNS, Cloudflare Access lockdown, always-on service):
 [HOSTING.md](HOSTING.md).
+
+
 
 ## Data sources
 
