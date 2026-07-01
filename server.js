@@ -15,6 +15,21 @@ const STADIUMS = require('./data/stadiums.json');
 const CITY_HEALTH = require('./data/city-health.json');
 const PENALTY_ZONES = require('./data/penalty-zones.json');
 
+// Load an optional .env with no dependency and no version-specific CLI flag, so the
+// server starts on any Node (>=18). Real environment variables take precedence; a
+// missing .env is fine. (.env is gitignored — absent on fresh clones.)
+(function loadEnv() {
+  try {
+    for (const line of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/)) {
+      const m = /^\s*([\w.-]+)\s*=\s*(.*?)\s*$/.exec(line);
+      if (!m || /^\s*#/.test(line)) continue;
+      let val = m[2];
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
+      if (!(m[1] in process.env)) process.env[m[1]] = val;
+    }
+  } catch { /* no .env — run on bundled data */ }
+})();
+
 const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MIME = {
